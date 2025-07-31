@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Settings</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; border: none; border-radius: 5px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; }
+        #hotkey-display { background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; min-height: 20px; font-weight: bold; }
+        small { color: #555; font-style: italic; }
+        code { background-color: #e5e7eb; padding: 2px 4px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Settings</h1>
+    <form id="config-form">
+        <div class="form-group">
+            <label for="url">URL to open:</label>
+            <input type="text" id="url" name="url" required>
+            <small style="display: block; margin-top: 5px;">
+                Note: For a Home Assistant dashboard, use <code>?kiosk</code> at the end of the link to enable Kiosk Mode.
+            </small>
+        </div>
+        <div class="form-group">
+            <label for="name">Name to display in tray:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label>Application Icon:</label>
+            <button type="button" id="select-icon-btn">Select file...</button>
+        </div>
+        <div class="form-group">
+            <label>Global Hotkey:</label>
+            <div id="hotkey-display">No hotkey set</div>
+            <button type="button" id="select-hotkey-btn" style="margin-top: 5px;">Choose Hotkey...</button>
+        </div>
+        <button type="submit">Save and Apply</button>
+    </form>
+    <script src="./config.js"></script>
+</body>
+</html>

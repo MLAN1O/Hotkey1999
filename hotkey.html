@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Select Hotkey</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; padding: 10px; user-select: none; text-align: center; }
+        #keyboard-container { display: inline-flex; flex-direction: column; gap: 5px; background-color: #d1d5db; padding: 10px; border-radius: 5px; }
+        .key-row { display: flex; justify-content: center; gap: 5px; }
+        .key { background-color: #fff; border: 1px solid #a1a1aa; border-radius: 4px; padding: 8px; cursor: pointer; min-width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 0 #a1a1aa; font-size: 12px; }
+        .key:active { box-shadow: none; transform: translateY(2px); }
+        .key.selected { background-color: #3b82f6; color: white; border-color: #1d4ed8; }
+        .key.modifier { background-color: #e5e7eb; }
+        .key.key-backspace { flex-grow: 2; }
+        .key.key-tab { flex-grow: 1.5; }
+        .key.key-capslock { flex-grow: 1.8; }
+        .key.key-enter { flex-grow: 2.2; }
+        .key.key-shift { flex-grow: 2.5; }
+        .key.key-space { flex-grow: 8; }
+        .key.confirm-btn { background-color: #22c55e; color: white; margin-top: 10px; font-weight: bold; flex-grow: 1; }
+        .key-block { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    </style>
+</head>
+<body>
+    <h3>Select a key combination and click Confirm</h3>
+    <div id="keyboard-container"></div>
+    <script src="./hotkey.js"></script>
+</body>
+</html>

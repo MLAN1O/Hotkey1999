@@ -1,0 +1,41 @@
+{
+  "name": "hotkeymyurllikeits1999",
+  "version": "1.0.1",
+  "description": "A simple app to open a URL with a global hotkey.",
+  "author": "Max L. Mendes",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.mlan1o.hotkeymyurllikeits1999",
+    "productName": "HotkeyMyURLLikeIts1999",
+    "files": [
+      "main.js",
+      "config.html",
+      "hotkey.html",
+      "config.js",
+      "hotkey.js",
+      "preload-config.js",
+      "preload-hotkey.js",
+      "icon.png",
+      "icon.ico"
+    ],
+    "asar": true,
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "runAfterFinish": true
+    }
+  }
+}
