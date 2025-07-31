@@ -12,15 +12,15 @@ When you press the hotkey, the window appears **instantly**. There is no browser
 
 ### Option 1: Use the Release (Recommended)
 
-1.  Go to the [Releases page](https://github.com/your-username/HotkeyMyURLLikeIts1999/releases) of this repository.
-2.  Download and run the latest installer (`.exe`).
+1. Go to the [Releases page](https://github.com/MLAN1O/Hotkey1999/releases) of this repository.  
+2. Download and run the latest installer (`.exe`).
 
 ### Option 2: Build from Source
 
 1.  **Run for development:**
     ```bash
-    git clone [https://github.com/your-username/HotkeyMyURLLikeIts1999.git](https://github.com/your-username/HotkeyMyURLLikeIts1999.git)
-    cd HotkeyMyURLLikeIts1999
+    git clone https://github.com/MLAN1O/Hotkey1999.git
+    cd Hotkey1999
     npm install
     npm start
     ```
