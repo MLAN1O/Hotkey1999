@@ -8,6 +8,23 @@ Unlike a browser shortcut, this app runs silently in the background from startup
 
 When you press the hotkey, the window appears **instantly**. There is no browser launch, no page load, and no delay. It feels like a native OS feature. Press the hotkey again to hide it instantly.
 
+## Demo
+
+### Tray Icon Access  
+Accessing settings via the tray icon:
+
+![Tray Icon](demo/TrayIcon.gif)
+
+### Configuration  
+Setting up the URL and hotkey:
+
+<img src="demo/Setting.gif" alt="Setting" width="700" />
+
+### Execution  
+Launching the app with the hotkey:
+
+<img src="demo/Execution.gif" alt="Setting" width="700" />
+
 ## How to Use
 
 ### Option 1: Use the Release (Recommended)
@@ -36,4 +53,5 @@ When you press the hotkey, the window appears **instantly**. There is no browser
 After running the app, right-click its icon in your system tray to set the URL and hotkey.
 
 ---
+
 By Max L. Mendes
