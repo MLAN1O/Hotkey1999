@@ -21,7 +21,7 @@ Setting up the URL and hotkey:
 <img src="demo/Setting.gif" alt="Setting" width="700" />
 
 ### Execution  
-Launching the app with the hotkey:
+Toggle the app window with the hotkey:
 
 <img src="demo/Execution.gif" alt="Setting" width="700" />
 
