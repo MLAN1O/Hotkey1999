@@ -36,3 +36,16 @@ document.getElementById('config-form').addEventListener('submit', (event) => {
     };
     window.api.saveConfig(newSettings);
 });
+
+// Adiciona o eventListener para o novo botão "Add New Instance" [9]
+document.getElementById('add-new-instance-btn').addEventListener('click', () => {
+    // Coleta as configurações atuais do formulário [9]
+    const newSettings = {
+        kioskURL: document.getElementById('url').value,
+        displayName: document.getElementById('name').value,
+        iconPath: selectedIconPath,
+        hotkey: selectedHotkey
+    };
+    // Envia essas configurações para o processo principal (`main.js`) para criar uma nova instância [9]
+    window.api.createNewInstance(newSettings);
+});
