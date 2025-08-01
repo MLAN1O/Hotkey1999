@@ -16,31 +16,41 @@
 </head>
 <body>
     <h1>Settings</h1>
+    <div class="info-display">
+        <p><strong>Instance ID:</strong> <span id="instance-id-display">Loading...</span></p>
+    </div>
+
     <form id="config-form">
         <div class="form-group">
-            <label for="url">URL to open:</label>
+            <label for="url">URL to load:</label>
             <input type="text" id="url" name="url" required>
-            <small style="display: block; margin-top: 5px;">
-                Note: For a Home Assistant dashboard, use <code>?kiosk</code> at the end of the link to enable Kiosk Mode.
-            </small>
         </div>
         <div class="form-group">
             <label for="name">Name to display in tray:</label>
             <input type="text" id="name" name="name" required>
         </div>
         <div class="form-group">
-            <label>Application Icon:</label>
-            <button type="button" id="select-icon-btn">Select file...</button>
+            <label>Application Hotkey:</label>
+            <div class="hotkey-container">
+                <span id="hotkey-display"></span>
+                <button type="button" id="select-hotkey-btn" class="button">Select Hotkey</button>
+            </div>
+            <p id="hotkey-error" class="error-message" style="display: none;"></p>
         </div>
         <div class="form-group">
-            <label>Global Hotkey:</label>
-            <div id="hotkey-display">No hotkey set</div>
-            <button type="button" id="select-hotkey-btn" style="margin-top: 5px;">Choose Hotkey...</button>
+            <label>Application Icon:</label>
+            <button type="button" id="select-icon-btn" class="button">Select Icon File (.png, .ico)</button>
         </div>
-        <button type="submit">Save and Apply</button>
+        <div class="form-actions">
+            <button type="submit" class="button primary-button">Save and Apply</button>
         </div>
-        <button type="button" id="add-new-instance-btn" style="margin-top: 20px;">Add New Instance with Current Settings</button>
     </form>
+
+    <div class="separator"></div>
+
+    <div class="form-actions" style="margin-top: 20px;">
+        <button id="add-new-instance-btn" class="button">Clone Settings to New Instance</button>
+    </div>
     <script src="./config.js"></script>
 </body>
 </html>

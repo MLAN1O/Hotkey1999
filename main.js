@@ -29,23 +29,37 @@ function getInstanceConfigPath(instanceId) {
  */
 function loadConfig(instanceIdToLoad = currentInstanceId) {
     const configPath = getInstanceConfigPath(instanceIdToLoad);
+    let config = {};
     try {
         if (fs.existsSync(configPath)) {
             console.log(`Carregando configuração de: ${configPath}`);
-            return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        } else {
+            // Configuração padrão se nenhum arquivo de configuração for encontrado.
+            console.log(`Nenhuma configuração encontrada para a instância ${instanceIdToLoad}. Usando padrão.`);
+            config = {
+                kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders_(Atari_2600_video_game)',
+                hotkey: 'Home',
+                displayName: `HotkeyMyURLInstance-${instanceIdToLoad || 'Default'}`,
+                iconPath: path.join(__dirname, 'icon.png'),
+                startWithWindows: false
+            };
         }
     } catch (error) {
         console.error(`Erro ao carregar config para a instância ${instanceIdToLoad} de ${configPath}:`, error);
+        // Retorna um objeto de configuração de emergência em caso de erro de parse.
+        config = {
+            kioskURL: 'https://example.com/error',
+            hotkey: '',
+            displayName: `Error Loading Config`,
+            iconPath: path.join(__dirname, 'icon.png'),
+            startWithWindows: false
+        };
     }
-    // Configuração padrão se nenhum arquivo de configuração for encontrado para esta instância.
-    console.log(`Nenhuma configuração encontrada para a instância ${instanceIdToLoad}. Usando padrão.`);
-    return {
-        kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders_(Atari_2600_video_game)',
-        hotkey: 'Home',
-        displayName: `HotkeyMyURLInstance-${instanceIdToLoad || 'Default'}`, // Nome de exibição dinâmico
-        iconPath: path.join(__dirname, 'icon.png'),
-        startWithWindows: false
-    };
+    // Adiciona o ID da instância ao objeto de configuração retornado.
+    // Isso garante que o renderer sempre saiba qual instância está editando.
+    config.instanceId = instanceIdToLoad;
+    return config;
 }
 
 /**
@@ -54,17 +68,44 @@ function loadConfig(instanceIdToLoad = currentInstanceId) {
  * @param {string} [instanceIdToSave=currentInstanceId] O ID da instância cuja configuração deve ser salva.
  * @returns {object|null} O objeto de configuração atualizado ou null em caso de falha.
  */
+/**
+ * ATUALIZA a configuração para uma instância existente. Usado por 'Save and Apply'.
+ * @param {object} newConfig As novas configurações a serem salvas.
+ * @param {string} [instanceIdToSave=currentInstanceId] O ID da instância cuja configuração deve ser salva.
+ * @returns {object|null} O objeto de configuração atualizado ou null em caso de falha.
+ */
 function saveConfig(newConfig, instanceIdToSave = currentInstanceId) {
     const configPath = getInstanceConfigPath(instanceIdToSave);
     try {
-        // Carrega a configuração existente da instância específica para mesclar com as novas configurações. [2]
+        // Carrega a configuração existente da instância específica para mesclar com as novas configurações.
         const currentInstanceConfig = loadConfig(instanceIdToSave);
         const updatedConfig = { ...currentInstanceConfig, ...newConfig };
         fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
-        console.log(`Configuração salva para a instância ${instanceIdToSave} em: ${configPath}`);
+        console.log(`Configuração ATUALIZADA para a instância ${instanceIdToSave} em: ${configPath}`);
         return updatedConfig;
     } catch (error) {
         console.error(`Falha ao salvar configuração para a instância ${instanceIdToSave}:`, error);
+        return null;
+    }
+}
+
+/**
+ * CRIA e salva o arquivo de configuração para uma NOVA instância. Usado por 'Add New Instance'.
+ * Garante que a nova instância seja criada com as configurações exatas fornecidas, sem mesclar com padrões.
+ * @param {object} initialConfig O objeto de configuração inicial completo para a nova instância.
+ * @param {string} instanceId O ID da nova instância.
+ * @returns {object|null} O objeto de configuração salvo ou null em caso de falha.
+ */
+function createInstanceConfig(initialConfig, instanceId) {
+    const configPath = getInstanceConfigPath(instanceId);
+    try {
+        // O objeto `initialConfig` vindo do renderer já é o estado desejado completo.
+        // Inclui startWithWindows, kioskURL, displayName, etc.
+        fs.writeFileSync(configPath, JSON.stringify(initialConfig, null, 2));
+        console.log(`Configuração inicial criada para a nova instância ${instanceId} em: ${configPath}`);
+        return initialConfig;
+    } catch (error) {
+        console.error(`Falha ao criar configuração para a nova instância ${instanceId}:`, error);
         return null;
     }
 }
@@ -74,7 +115,7 @@ function saveConfig(newConfig, instanceIdToSave = currentInstanceId) {
 const args = process.argv;
 for (let i = 0; i < args.length; i++) {
     if (args[i].startsWith('--instanceId=')) {
-        currentInstanceId = args[i].split('=')[2];
+        currentInstanceId = args[i].split('=')[1];
         break;
     }
 }
@@ -114,7 +155,7 @@ function createTray() {
     const trayIconPath = fs.existsSync(config.iconPath) ? config.iconPath : path.join(__dirname, 'icon.png');
     tray = new Tray(trayIconPath);
     // Exibe o ID da instância no tooltip para fácil identificação.
-    tray.setToolTip(`${config.displayName} (Running...) [ID: ${currentInstanceId}]`);
+    tray.setToolTip(`${config.displayName} (Running...)`);
 
     const contextMenu = Menu.buildFromTemplate([
         { label: 'Open', click: restoreWindow },
@@ -224,7 +265,7 @@ function createWindow() {
     win.on('focus', () => win.webContents.setAudioMuted(false));
     win.webContents.on('page-title-updated', (e, title) => {
         if (tray) {
-            tray.setToolTip(`${config.displayName || title} (Running) [ID: ${currentInstanceId}]`); // Atualiza o tooltip com o ID da instância
+            tray.setToolTip(`${config.displayName || title} (Running)`); // Atualiza o tooltip com o ID da instância
         }
     });
 }
@@ -252,24 +293,44 @@ ipcMain.on('hotkey-selected', (event, hotkey) => {
 });
 
 // Salva a configuração atual da instância. [6-8]
-ipcMain.on('save-config', (event, newSettings) => {
+ipcMain.handle('save-config', (event, newSettings) => {
+    // Validação de Hotkey Duplicada, excluindo a própria instância
+    const userDataPath = app.getPath('userData');
+    const allConfigFiles = fs.readdirSync(userDataPath).filter(f => f.startsWith('config-') && f.endsWith('.json'));
+
+    for (const file of allConfigFiles) {
+        const instanceId = file.replace('config-', '').replace('.json', '');
+        if (instanceId === currentInstanceId) {
+            continue; // Pula a verificação para a instância atual
+        }
+        try {
+            const configContent = JSON.parse(fs.readFileSync(path.join(userDataPath, file), 'utf-8'));
+            if (newSettings.hotkey && configContent.hotkey === newSettings.hotkey) {
+                const instanceName = configContent.displayName || 'Unnamed';
+                return { 
+                    success: false, 
+                    error: `Hotkey is already in use by "${instanceName}" [ID: ${instanceId}]. Please choose another.` 
+                };
+            }
+        } catch (e) {
+            console.error(`Erro ao ler o arquivo de configuração ${file}:`, e);
+        }
+    }
+
+    // Se a validação passar, continua com o salvamento
     const oldConfig = { ...config };
-    // Salva a configuração para a instância atual. [2]
     config = saveConfig(newSettings, currentInstanceId);
 
     if (config) {
-        // Atualiza o ícone da bandeja se o caminho do ícone mudou.
         if (newSettings.iconPath && fs.existsSync(newSettings.iconPath)) {
             tray.setImage(newSettings.iconPath);
         }
-        // Atualiza o tooltip da bandeja com o novo nome de exibição.
-        if (newSettings.displayName) tray.setToolTip(`${newSettings.displayName} (Running) [ID: ${currentInstanceId}]`);
-        // Recarrega a URL na janela principal se a URL mudou.
-        if (newSettings.kioskURL !== oldConfig.kioskURL) win.loadURL(newSettings.kioskURL);
-
-        // [3] "É crucial que cada instância tenha uma hotkey única."
-        // A lógica de desregistrar/registrar hotkey existente funciona,
-        // contanto que o usuário selecione uma hotkey única para cada instância.
+        if (newSettings.displayName) {
+            tray.setToolTip(`${newSettings.displayName} (Running)`);
+        }
+        if (newSettings.kioskURL !== oldConfig.kioskURL) {
+            win.loadURL(newSettings.kioskURL);
+        }
         if (newSettings.hotkey !== oldConfig.hotkey) {
             if (oldConfig.hotkey) {
                 globalShortcut.unregister(oldConfig.hotkey);
@@ -279,37 +340,61 @@ ipcMain.on('save-config', (event, newSettings) => {
                     globalShortcut.register(newSettings.hotkey, toggleMainWindow);
                 } catch (e) {
                     console.error(`Falha ao registrar hotkey "${newSettings.hotkey}" para a instância ${currentInstanceId}:`, e);
-                    dialog.showErrorBox('Erro de Hotkey', `A combinação de teclas "${newSettings.hotkey}" é inválida ou já está em uso por outra aplicação/instância.`);
+                    return { success: false, error: `Hotkey "${newSettings.hotkey}" is invalid or used by another application.` };
                 }
             }
         }
         if (configWin) configWin.close();
+        return { success: true };
+    } else {
+        return { success: false, error: 'Failed to save settings.' };
     }
 });
 
 // **Novo IPC para Criar uma Nova Instância**
 // [9] "Em main.js, você adicionaria um listener para o novo canal IPC (ex: create-new-instance)."
-ipcMain.on('create-new-instance', async (event, newSettings) => {
-    // [1] "Gerar um Instance ID único: Poderia ser um GUID ou um timestamp combinado com um prefixo (ex: kiosk-1, kiosk-2)."
-    const newInstanceId = `kiosk-${crypto.randomUUID().substring(0, 8)}`; // Exemplo: kiosk-abcdefgh
+ipcMain.handle('create-new-instance', async (event, newInstanceSettings) => {
+    // Validação de Hotkey Duplicada
+    const userDataPath = app.getPath('userData');
+    const allConfigFiles = fs.readdirSync(userDataPath).filter(f => f.startsWith('config-') && f.endsWith('.json'));
 
-    // [1] "Salvar a Nova Configuração: Usar a nova função saveConfig() (...) para salvar os newSettings em um novo arquivo de configuração específico para o Instance ID gerado."
-    const savedNewConfig = saveConfig(newSettings, newInstanceId);
+    for (const file of allConfigFiles) {
+        try {
+            const configContent = JSON.parse(fs.readFileSync(path.join(userDataPath, file), 'utf-8'));
+            if (newInstanceSettings.hotkey && configContent.hotkey === newInstanceSettings.hotkey) {
+                const instanceId = file.replace('config-', '').replace('.json', '');
+                const instanceName = configContent.displayName || 'Unnamed';
+                return { 
+                    success: false, 
+                    error: `Hotkey is already in use by "${instanceName}" [ID: ${instanceId}]. Please choose another.` 
+                };
+            }
+        } catch (e) {
+            console.error(`Erro ao ler o arquivo de configuração ${file}:`, e);
+        }
+    }
+
+    const newInstanceId = crypto.randomUUID().substring(0, 8);
+
+    // Usa a nova função para criar o arquivo de configuração da nova instância sem mesclar com padrões.
+    const savedNewConfig = createInstanceConfig(newInstanceSettings, newInstanceId);
 
     if (savedNewConfig) {
-        // [1] "Iniciar o Novo Processo Electron: Esta é a parte mais complexa. O main.js precisaria usar o módulo child_process do Node.js (...) para executar um novo processo do seu próprio aplicativo."
-        // [2] "Cada "instância" do seu aplicativo seria, na verdade, um processo Electron separado."
-        const electronPath = app.getPath('exe'); // Caminho para o executável atual do Electron (o próprio aplicativo)
-        const argsForNewInstance = [
-            path.join(app.getAppPath(), 'main.js'), // Caminho para o main.js do aplicativo
-            `--instanceId=${newInstanceId}`, // Passa o novo ID da instância como argumento
-            // '--hidden' // Inicia a nova instância oculta
-        ];
+        // Prepara os argumentos para a nova instância, diferenciando entre desenvolvimento e produção.
+        const argsForNewInstance = [`--instanceId=${newInstanceId}`];
+        if (!app.isPackaged) {
+            // Em desenvolvimento, precisamos dizer ao Electron para executar o diretório do aplicativo atual.
+            argsForNewInstance.unshift(app.getAppPath());
+        }
 
-        console.log(`Lançando nova instância: ${electronPath} ${argsForNewInstance.join(' ')}`);
+        // `process.execPath` é a forma mais robusta de obter o caminho para o executável
+        // (seja o electron.exe em dev ou o seuapp.exe em produção).
+        const executablePath = process.execPath;
 
-        // Lança um novo processo Electron.
-        const newProcess = child_process.spawn(electronPath, argsForNewInstance, {
+        console.log(`Lançando nova instância: ${executablePath} ${argsForNewInstance.join(' ')}`);
+
+        // Lança o novo processo com os argumentos corretos.
+        const newProcess = child_process.spawn(executablePath, argsForNewInstance, {
             detached: true, // Permite que o processo pai (esta instância) saia independentemente
             stdio: 'ignore' // Desvincula stdin/out/err do processo pai
         });
@@ -329,18 +414,13 @@ ipcMain.on('create-new-instance', async (event, newSettings) => {
             // registerInstanceForStartup(newInstanceId, electronPath, argsForNewInstance);
         }
 
-        dialog.showMessageBox(configWin, {
-            type: 'info',
-            title: 'Nova Instância Criada',
-            message: `Nova instância '${newInstanceId}' criada e lançada com sucesso!`,
-            buttons: ['OK']
-        });
-
         // Fecha a janela de configurações após criar uma nova instância.
         if (configWin) configWin.close();
 
+        return { success: true };
+
     } else {
-        dialog.showErrorBox('Erro ao Criar Instância', 'Falha ao salvar a configuração para a nova instância.');
+        return { success: false, error: 'Failed to save the new instance configuration.' };
     }
 });
 

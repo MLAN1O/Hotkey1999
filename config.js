@@ -5,6 +5,8 @@ const hotkeyDisplay = document.getElementById('hotkey-display');
 
 document.addEventListener('DOMContentLoaded', async () => {
     const currentConfig = await window.api.getConfig();
+    // Exibe o ID da instância na UI.
+    document.getElementById('instance-id-display').textContent = currentConfig.instanceId || 'default';
     document.getElementById('url').value = currentConfig.kioskURL;
     document.getElementById('name').value = currentConfig.displayName;
     selectedIconPath = currentConfig.iconPath;
@@ -26,26 +28,47 @@ window.api.onHotkeyUpdate((hotkey) => {
     hotkeyDisplay.textContent = selectedHotkey || 'No hotkey set';
 });
 
-document.getElementById('config-form').addEventListener('submit', (event) => {
+document.getElementById('config-form').addEventListener('submit', async (event) => {
     event.preventDefault();
+    const hotkeyError = document.getElementById('hotkey-error');
+    hotkeyError.style.display = 'none';
+
     const newSettings = {
         kioskURL: document.getElementById('url').value,
         displayName: document.getElementById('name').value,
         iconPath: selectedIconPath,
         hotkey: selectedHotkey
     };
-    window.api.saveConfig(newSettings);
+
+    const result = await window.api.saveConfig(newSettings);
+
+    if (!result.success) {
+        hotkeyError.textContent = result.error;
+        hotkeyError.style.display = 'block';
+    }
 });
 
-// Adiciona o eventListener para o novo botão "Add New Instance" [9]
-document.getElementById('add-new-instance-btn').addEventListener('click', () => {
-    // Coleta as configurações atuais do formulário [9]
-    const newSettings = {
+document.getElementById('add-new-instance-btn').addEventListener('click', async () => {
+    const hotkeyError = document.getElementById('hotkey-error');
+    hotkeyError.style.display = 'none'; // Oculta a mensagem de erro anterior
+
+    const currentConfig = await window.api.getConfig();
+    const formSettings = {
         kioskURL: document.getElementById('url').value,
         displayName: document.getElementById('name').value,
         iconPath: selectedIconPath,
         hotkey: selectedHotkey
     };
-    // Envia essas configurações para o processo principal (`main.js`) para criar uma nova instância [9]
-    window.api.createNewInstance(newSettings);
+    const newInstanceSettings = { ...currentConfig, ...formSettings };
+
+    // Invoca a função e aguarda o resultado.
+    const result = await window.api.createNewInstance(newInstanceSettings);
+
+    if (!result.success) {
+        // Se houver um erro, exibe-o no elemento de erro de hotkey.
+        hotkeyError.textContent = result.error;
+        hotkeyError.style.display = 'block';
+    } else {
+        // Se for bem-sucedido, a janela de configuração será fechada pelo processo principal.
+    }
 });
