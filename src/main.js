@@ -101,7 +101,7 @@ class MainApp {
             show: false,
             width: 1024, height: 768,
             autoHideMenuBar: true,
-            icon: path.join(__dirname, '../build/icon.ico'),
+            icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { backgroundThrottling: false }
         });
 
@@ -163,6 +163,7 @@ class MainApp {
         const trayIconPath = path.join(__dirname, 'assets/icon.png');
         this.tray = new Tray(trayIconPath);
         this.tray.setToolTip('HotkeyMyURL Manager (Running...)');
+        this.tray.on('double-click', () => this.createConfigWindow());
 
         const contextMenu = Menu.buildFromTemplate([
             { label: 'Settings', click: () => this.createConfigWindow() },
@@ -197,6 +198,7 @@ class MainApp {
         this.configWin = new BrowserWindow({
             width: 1024, height: 768, title: 'HotkeyMyURL Settings',
             autoHideMenuBar: true,
+            icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { 
                 preload: path.join(__dirname, 'preload-config.js'),
                 contextIsolation: true,
