@@ -183,7 +183,7 @@ class MainApp {
     createHotkeyWindow(currentHotkey) {
         if (this.hotkeyWin) return this.hotkeyWin.focus();
         this.hotkeyWin = new BrowserWindow({
-            width: 1024, height: 768, title: 'Select Hotkey', parent: this.configWin, modal: true,
+            width: 1440, height: 720, title: 'Select Hotkey', parent: this.configWin, modal: true,
             autoHideMenuBar: true,
             webPreferences: { 
                 preload: path.join(__dirname, 'preload-hotkey.js'),
