@@ -182,8 +182,22 @@ class MainApp {
      */
     createHotkeyWindow(currentHotkey) {
         if (this.hotkeyWin) return this.hotkeyWin.focus();
+
+        const configWinBounds = this.configWin.getBounds();
+        const hotkeyWinWidth = 1440; // As defined in the current code
+        const hotkeyWinHeight = 720; // As defined in the current code
+
+        const x = Math.round(configWinBounds.x + (configWinBounds.width / 2) - (hotkeyWinWidth / 2));
+        const y = Math.round(configWinBounds.y + (configWinBounds.height / 2) - (hotkeyWinHeight / 2));
+
         this.hotkeyWin = new BrowserWindow({
-            width: 1440, height: 720, title: 'Select Hotkey', parent: this.configWin, modal: true,
+            x: x,
+            y: y,
+            width: hotkeyWinWidth, 
+            height: hotkeyWinHeight, 
+            title: 'Select Hotkey', 
+            parent: this.configWin, 
+            modal: true,
             autoHideMenuBar: true,
             webPreferences: { 
                 preload: path.join(__dirname, 'preload-hotkey.js'),
