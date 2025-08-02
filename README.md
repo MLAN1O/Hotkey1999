@@ -1,35 +1,65 @@
 # HotkeyMyURLLikeIts1999
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![Platform](https://img.shields.io/badge/platform-windows-lightgrey.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MLAN1O/Hotkey1999/blob/main/LICENSE)
 
-Turn any webpage into an instant, native-feeling panel that you can toggle with a global hotkey.
+## Table of Contents
+- [What’s This?](#whats-this)
+- [Cool Features](#cool-features)
+- [Quick Demo](#quick-demo)
+- [Getting Started](#getting-started)
+  - [Install It](#install-it)
+  - [How to Use](#how-to-use)
+- [Works On](#works-on)
+- [Wanna Help?](#wanna-help)
+- [License](#license)
 
-Unlike a browser shortcut, this app runs silently in the background, keeping your page pre-loaded in memory. When you press the hotkey, the window appears **instantly**. No browser launch, no page load, no delay. Press it again, and it vanishes.
+## What’s This?
 
-## Key Features
+I wanted a faster way to open my go-to web pages — dashboards, feeds, camera views — without dealing with browsers or tabs.
 
-* **⚡ Instant Access:** Toggle a fullscreen, borderless window with your content on command.
-* **🗂️ Multi-Profile Management:** Create and manage multiple profiles, each with its own unique URL, hotkey, and display name.
-* **⚙️ Lightweight & Efficient:** A single, resource-friendly process manages all your hotkey profiles.
-* **⌨️ Visual Hotkey Picker:** Easily set up key combinations using a visual keyboard interface, including modifiers like `Ctrl`, `Alt`, `Shift`, and Numpad keys.
-* **🚀 Launch on Startup:** Configure the app to start automatically with your operating system for seamless access.
+So I made this tool:  
+Bind any URL to a hotkey and launch it instantly in a fullscreen window.  
+No load time, no clicks — it just appears. Press the same hotkey again, and it’s gone.
 
-## Demo
+Perfect for:
+* **Instantly popping up your camera grid, dashboard, or any web tool**
+* **Keeping monitoring screens one keystroke away — no browser delays**
+* **Dodging tab overload by giving your go-to web app its own shortcut**
+* **Feeling like a hacker every time a fullscreen web page appears out of nowhere**
 
-*(Note: The GIFs below reflect an older UI. They will be updated soon to showcase the new multi-profile manager.)*
+## Cool Features
 
-#### Quick access from the system tray:
+* ⚡ **Instant Launch:** Opens your web page in milliseconds — no loading, no waiting.
+* 🖥️ **Fullscreen by Default:** Clean, borderless, distraction-free. Just like a native app.
+* ⌨️ **Hotkey for Everything:** Assign a custom hotkey to each profile (Numpad and modifiers supported).
+* 🗂️ **Multiple Profiles:** Set up different URLs with unique names and shortcuts.
+* 🪟 **Smart Window Sizing:** Want it smaller than fullscreen? Press F11, resize it — we’ll remember it for next time.
+* 🔁 **Quick Refresh:** Hit F5 to reload the original URL instantly.
+* 🚀 **Start with Windows:** Keep it ready in the background from the moment you log in.
+* ⚙️ **Lightweight & Silent:** One tray icon, one background process. That’s it. 
+
+## Quick Demo
+
+See it in action:
+
+> \*Note: GIFs below show the older UI — updated ones with the new multi-profile manager are on the way!\*
+
+#### From system tray to action:
 ![Tray Icon Access](demo/TrayIcon.gif)
 
-#### Configuring a profile with a URL and hotkey:
+#### Setting up a profile:
 <img src="demo/Setting.gif" alt="Configuration" width="700" />
 
-#### Toggling the window with the assigned hotkey:
+#### Using the hotkey:
 <img src="demo/Execution.gif" alt="Execution" width="700" />
 
-## Installation
+## Getting Started
+
+Here’s how to get things rolling.
+
+### Install It
 
 ### Option 1: Use the Release (Recommended)
 
@@ -52,22 +82,32 @@ Unlike a browser shortcut, this app runs silently in the background, keeping you
     ```
     This will create an installer in the `dist` folder.
 
-## How to Use
+### How to Use
 
-Once launched, the application icon will appear in your system tray (near the clock).
+Right-click the tray icon and hit `Settings` to manage your profiles.
 
-1.  **Access Settings:** Right-click the tray icon and select `Settings`.
-2.  **Manage Profiles:**
-    * To **add a profile**, click the `New Profile` button.
-    * To **edit a profile**, select it from the list on the left and modify its `URL`, `Display Name`, and `Hotkey`.
-    * To **set a hotkey**, click the `Select` button and use the virtual keyboard to choose your desired key combination, then click `Confirm`.
-    * Click `Save Changes` to apply your updates or `Delete Profile` to remove the selected one.
-3.  **Enable/Disable Startup:** Right-click the tray icon and check/uncheck `Start with Windows`.
+- Use `New Profile` to add one, or click an existing profile to edit.
+- Set a name, URL, and hotkey using the visual picker.
+- Don’t forget to `Save Changes` if you're done with it.
+- To auto-launch with Windows, just toggle `Start with Windows` in the tray menu.
 
-## Compatibility
+## Works On
 
-This application is built with Electron and is primarily tested on **Windows**. While it may work on macOS and Linux, the `Start with Windows` feature is OS-specific and would require manual configuration on other platforms.
+This app was made with Electron and is mainly tested on **Windows**.
+
+It might run on macOS or Linux, but keep in mind:
+- The “Start with Windows” option won’t work out of the box.
+- You’ll probably need to set up a custom startup script on those platforms.
+
+## Wanna Help?
+
+Contributions are always welcome 🙌
+If you’ve got an idea, found a bug, or just want to make things better, check out the [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
+
+## License
+
+This project uses the [MIT License](LICENSE), so feel free to use, modify, and share it.
 
 ---
 
-By Max L. Mendes
+Made with ☕ and way too many hotkeys by **Max L. Mendes**
