@@ -1,8 +1,8 @@
 # HotkeyMyURLLikeIts1999
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)]([https://github.com/MLAN1O/Hotkey1999](https://github.com/MLAN1O/Hotkey1999/releases))
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![Platform](https://img.shields.io/badge/platform-windows-lightgrey.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/MLAN1O/Hotkey1999/blob/main/LICENSE)
 
 Turn any webpage into an instant, native-feeling panel that you can toggle with a global hotkey.
 
@@ -18,7 +18,7 @@ Unlike a browser shortcut, this app runs silently in the background, keeping you
 
 ## Demo
 
-*(Note: The GIFs below might reflect an older UI. They will be updated soon to showcase the new multi-profile manager.)*
+*(Note: The GIFs below reflect an older UI. They will be updated soon to showcase the new multi-profile manager.)*
 
 #### Quick access from the system tray:
 ![Tray Icon Access](demo/TrayIcon.gif)
