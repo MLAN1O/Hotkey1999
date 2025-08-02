@@ -1,4 +1,4 @@
-// ConfigManager.js
+'''// ConfigManager.js
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -8,7 +8,62 @@ class ConfigManager {
     constructor() {
         this.userDataPath = app.getPath('userData');
         this.profilesPath = path.join(this.userDataPath, 'profiles.json');
+        this.settingsPath = path.join(this.userDataPath, 'settings.json');
         this.profiles = this.loadProfiles();
+        this.settings = this.loadAppSettings();
+    }
+
+    /**
+     * Loads application settings from settings.json.
+     * If the file doesn't exist, it creates it with default values.
+     * @returns {object} The application settings object.
+     */
+    loadAppSettings() {
+        try {
+            if (fs.existsSync(this.settingsPath)) {
+                const data = fs.readFileSync(this.settingsPath, 'utf-8');
+                return JSON.parse(data);
+            } else {
+                const defaultSettings = {
+                    startWithWindows: false
+                };
+                this.saveAppSettings(defaultSettings);
+                return defaultSettings;
+            }
+        } catch (error) {
+            console.error('Error loading app settings:', error);
+            return { startWithWindows: false };
+        }
+    }
+
+    /**
+     * Saves the application settings to settings.json.
+     * @param {object} settings The settings object to save.
+     */
+    saveAppSettings(settings) {
+        try {
+            fs.writeFileSync(this.settingsPath, JSON.stringify(settings, null, 2));
+            this.settings = settings;
+        } catch (error) {
+            console.error('Failed to save app settings:', error);
+        }
+    }
+
+    /**
+     * Gets the "Start with Windows" setting.
+     * @returns {boolean}
+     */
+    getStartWithWindows() {
+        return this.settings.startWithWindows;
+    }
+
+    /**
+     * Sets the "Start with Windows" setting.
+     * @param {boolean} value The new value.
+     */
+    setStartWithWindows(value) {
+        this.settings.startWithWindows = value;
+        this.saveAppSettings(this.settings);
     }
 
     /**
@@ -27,8 +82,7 @@ class ConfigManager {
                     id: crypto.randomUUID().substring(0, 8),
                     kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
                     hotkey: 'Home',
-                    displayName: 'Default Profile',
-                    startWithWindows: false
+                    displayName: 'Default Profile'
                 };
                 this.saveProfiles([defaultProfile]);
                 return [defaultProfile];
@@ -141,3 +195,4 @@ class ConfigManager {
 }
 
 module.exports = ConfigManager;
+''

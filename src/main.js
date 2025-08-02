@@ -1,4 +1,4 @@
-// main.js
+'''// main.js
 const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog } = require('electron');
 const path = require('path');
 const ConfigManager = require('./ConfigManager');
@@ -184,7 +184,7 @@ class MainApp {
             {
                 label: 'Start with Windows',
                 type: 'checkbox',
-                checked: app.getLoginItemSettings().openAtLogin,
+                checked: this.configManager.getStartWithWindows(),
                 click: (menuItem) => this.toggleStartWithWindows(menuItem.checked)
             },
             { type: 'separator' },
@@ -198,6 +198,7 @@ class MainApp {
      * @param {boolean} startWithWindows Whether the app should start with Windows.
      */
     toggleStartWithWindows(startWithWindows) {
+        this.configManager.setStartWithWindows(startWithWindows);
         app.setLoginItemSettings({
             openAtLogin: startWithWindows,
             args: ['--hidden'] // The main process will handle showing/hiding windows.
@@ -334,3 +335,4 @@ class MainApp {
 
 const mainApp = new MainApp();
 mainApp.init();
+'''
