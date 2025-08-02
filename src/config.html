@@ -18,8 +18,40 @@
         button:active { transform: translateY(1px); filter: brightness(90%); }
         button.danger { background-color: #dc3545; }
         #hotkey-display { background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; min-height: 20px; font-weight: bold; }
-        .error-message { color: #dc3545; font-weight: bold; margin-top: 5px; }
-        .success-message { color: #28a745; font-weight: bold; margin-top: 5px; }
+        /* Toast Messages */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(0);
+        }
+
+        .toast.hide {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .toast-success {
+            background-color: #28a745; /* Green */
+        }
+
+        .toast-error {
+            background-color: #dc3545; /* Red */
+        }
     </style>
 </head>
 <body>
@@ -55,8 +87,6 @@
                 <button type="submit">Save Changes</button>
                 <button type="button" id="delete-profile-btn" class="danger">Delete Profile</button>
             </div>
-            <p id="error-message" class="error-message" style="display: none;"></p>
-            <p id="success-message" class="success-message" style="display: none;"></p>
         </form>
     </div>
 

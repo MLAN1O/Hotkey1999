@@ -1,4 +1,4 @@
-'''// main.js
+// main.js
 const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog } = require('electron');
 const path = require('path');
 const ConfigManager = require('./ConfigManager');
@@ -335,4 +335,3 @@ class MainApp {
 
 const mainApp = new MainApp();
 mainApp.init();
-'''

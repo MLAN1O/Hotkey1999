@@ -1,4 +1,4 @@
-'''// ConfigManager.js
+// ConfigManager.js
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -195,4 +195,3 @@ class ConfigManager {
 }
 
 module.exports = ConfigManager;
-''

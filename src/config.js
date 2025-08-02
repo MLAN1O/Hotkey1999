@@ -7,8 +7,42 @@ const profileIdInput = document.getElementById('profile-id');
 const urlInput = document.getElementById('url');
 const nameInput = document.getElementById('name');
 const hotkeyDisplay = document.getElementById('hotkey-display');
-const errorMessage = document.getElementById('error-message');
-const successMessage = document.getElementById('success-message');
+
+// Function to show toast messages
+function showToast(message, type = 'success') {
+    const toastContainer = document.getElementById('toast-container') || (() => {
+        const div = document.createElement('div');
+        div.id = 'toast-container';
+        document.body.appendChild(div);
+        return div;
+    })();
+
+    const toast = document.createElement('div');
+    toast.classList.add('toast', `toast-${type}`);
+    toast.textContent = message;
+
+    toastContainer.appendChild(toast);
+
+    // Automatically remove the toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.add('hide');
+        toast.addEventListener('transitionend', () => toast.remove());
+    }, 3000);
+}
+
+// Validation functions
+function isValidUrl(string) {
+    try {
+        const url = new URL(string);
+        return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch (_) {
+        return false;
+    }
+}
+
+function isValidDisplayName(name) {
+    return name.trim().length > 0;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadProfiles();
@@ -52,8 +86,6 @@ function selectProfile(profileId) {
         nameInput.value = profile.displayName;
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
-        errorMessage.style.display = 'none';
-        successMessage.style.display = 'none';
     }
     renderProfileList();
 }
@@ -64,15 +96,25 @@ function resetForm() {
     nameInput.value = 'New Profile';
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
-    errorMessage.style.display = 'none';
-    successMessage.style.display = 'none';
     selectedProfileId = null;
 }
 
 document.getElementById('add-profile-btn').addEventListener('click', async () => {
+    const newProfileUrl = 'https://example.com';
+    const newProfileName = 'New Profile';
+
+    if (!isValidUrl(newProfileUrl)) {
+        showToast('Invalid default URL for new profile.', 'error');
+        return;
+    }
+    if (!isValidDisplayName(newProfileName)) {
+        showToast('Invalid default display name for new profile.', 'error');
+        return;
+    }
+
     const profileData = {
-        kioskURL: 'https://example.com',
-        displayName: 'New Profile',
+        kioskURL: newProfileUrl,
+        displayName: newProfileName,
         hotkey: null
     };
 
@@ -80,10 +122,9 @@ document.getElementById('add-profile-btn').addEventListener('click', async () =>
 
     if (result.success) {
         await loadProfiles(result.profile.id);
+        showToast('New profile added successfully!', 'success');
     } else {
-        errorMessage.textContent = result.error;
-        errorMessage.style.display = 'block';
-        successMessage.style.display = 'none';
+        showToast(result.error, 'error');
     }
 });
 
@@ -98,12 +139,23 @@ window.api.onHotkeyUpdate((hotkey) => {
 
 document.getElementById('config-form').addEventListener('submit', async (event) => {
     event.preventDefault();
-    errorMessage.style.display = 'none';
-    successMessage.style.display = 'none';
+
+    const kioskURL = urlInput.value;
+    const displayName = nameInput.value;
+
+    if (!isValidUrl(kioskURL)) {
+        showToast('Please enter a valid URL (e.g., http://example.com).', 'error');
+        return;
+    }
+
+    if (!isValidDisplayName(displayName)) {
+        showToast('Display Name cannot be empty.', 'error');
+        return;
+    }
 
     const profileData = {
-        kioskURL: urlInput.value,
-        displayName: nameInput.value,
+        kioskURL: kioskURL,
+        displayName: displayName,
         hotkey: selectedHotkey
     };
 
@@ -117,11 +169,9 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
     if (result.success) {
         const idToSelect = selectedProfileId || (result.profile ? result.profile.id : null);
         await loadProfiles(idToSelect);
-        successMessage.textContent = 'Profile saved successfully!';
-        successMessage.style.display = 'block';
+        showToast('Profile saved successfully!', 'success');
     } else {
-        errorMessage.textContent = result.error;
-        errorMessage.style.display = 'block';
+        showToast(result.error, 'error');
     }
 });
 
@@ -131,9 +181,8 @@ document.getElementById('delete-profile-btn').addEventListener('click', async ()
     const result = await window.api.deleteProfile(selectedProfileId);
     if (result.success) {
         loadProfiles();
+        showToast('Profile deleted successfully!', 'success');
     } else {
-        errorMessage.textContent = result.error;
-        errorMessage.style.display = 'block';
-        successMessage.style.display = 'none';
+        showToast(result.error, 'error');
     }
 });
