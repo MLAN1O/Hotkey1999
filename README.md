@@ -1,36 +1,40 @@
 # HotkeyMyURLLikeIts1999
 
-This app opens a URL in a clean, fullscreen window using a global hotkey.
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)]([https://github.com/MLAN1O/Hotkey1999](https://github.com/MLAN1O/Hotkey1999/releases))
+[![Platform](https://img.shields.io/badge/platform-windows-lightgrey.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## The Difference
+Turn any webpage into an instant, native-feeling panel that you can toggle with a global hotkey.
 
-Unlike a browser shortcut, this app runs silently in the background from startup. It keeps your page pre-loaded in memory.
+Unlike a browser shortcut, this app runs silently in the background, keeping your page pre-loaded in memory. When you press the hotkey, the window appears **instantly**. No browser launch, no page load, no delay. Press it again, and it vanishes.
 
-When you press the hotkey, the window appears **instantly**. There is no browser launch, no page load, and no delay. It feels like a native OS feature. Press the hotkey again to hide it instantly.
+## ✨ Key Features
 
-## Demo
+* **⚡ Instant Access:** Toggle a fullscreen, borderless window with your content on command.
+* **🗂️ Multi-Profile Management:** Create and manage multiple profiles, each with its own unique URL, hotkey, and display name.
+* **⚙️ Lightweight & Efficient:** A single, resource-friendly process manages all your hotkey profiles.
+* **⌨️ Visual Hotkey Picker:** Easily set up key combinations using a visual keyboard interface, including modifiers like `Ctrl`, `Alt`, `Shift`, and Numpad keys.
+* **🚀 Launch on Startup:** Configure the app to start automatically with your operating system for seamless access.
 
-### Tray Icon Access  
-Accessing settings via the tray icon:
+## 🎬 Demo
 
-![Tray Icon](demo/TrayIcon.gif)
+*(Note: The GIFs below might reflect an older UI. They will be updated soon to showcase the new multi-profile manager.)*
 
-### Configuration  
-Setting up the URL and hotkey:
+#### Quick access from the system tray:
+![Tray Icon Access](demo/TrayIcon.gif)
 
-<img src="demo/Setting.gif" alt="Setting" width="700" />
+#### Configuring a profile with a URL and hotkey:
+<img src="demo/Setting.gif" alt="Configuration" width="700" />
 
-### Execution  
-Toggle the app window with the hotkey:
+#### Toggling the window with the assigned hotkey:
+<img src="demo/Execution.gif" alt="Execution" width="700" />
 
-<img src="demo/Execution.gif" alt="Setting" width="700" />
-
-## How to Use
+## 🚀 Installation
 
 ### Option 1: Use the Release (Recommended)
 
-1. Go to the [Releases page](https://github.com/MLAN1O/Hotkey1999/releases) of this repository.  
-2. Download and run the latest installer (`.exe`).
+1.  Go to the [Releases page](https://github.com/MLAN1O/Hotkey1999/releases) of this repository.
+2.  Download and run the latest installer (`.exe`).
 
 ### Option 2: Build from Source
 
@@ -48,9 +52,21 @@ Toggle the app window with the hotkey:
     ```
     This will create an installer in the `dist` folder.
 
-## Configuration
+## 👨‍💻 How to Use
 
-After running the app, right-click its icon in your system tray to set the URL and hotkey.
+Once launched, the application icon will appear in your system tray (near the clock).
+
+1.  **Access Settings:** Right-click the tray icon and select `Settings`.
+2.  **Manage Profiles:**
+    * To **add a profile**, click the `New Profile` button.
+    * To **edit a profile**, select it from the list on the left and modify its `URL`, `Display Name`, and `Hotkey`.
+    * To **set a hotkey**, click the `Select` button and use the virtual keyboard to choose your desired key combination, then click `Confirm`.
+    * Click `Save Changes` to apply your updates or `Delete Profile` to remove the selected one.
+3.  **Enable/Disable Startup:** Right-click the tray icon and check/uncheck `Start with Windows`.
+
+## 💻 Compatibility
+
+This application is built with Electron and is primarily tested on **Windows**. While it may work on macOS and Linux, the `Start with Windows` feature is OS-specific and would require manual configuration on other platforms.
 
 ---
 
