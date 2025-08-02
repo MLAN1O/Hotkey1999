@@ -1,6 +1,6 @@
 # HotkeyMyURLLikeIts1999
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)]([https://github.com/MLAN1O/Hotkey1999](https://github.com/MLAN1O/Hotkey1999/releases))
+[![Version](https://img.shields.io/badge/version-1.0.2-blue.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![Platform](https://img.shields.io/badge/platform-windows-lightgrey.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
