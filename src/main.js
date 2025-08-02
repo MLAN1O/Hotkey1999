@@ -42,7 +42,37 @@ class MainApp {
             this.createProfileWindow(profile);
             this.registerProfileShortcut(profile);
         });
+        this.registerF5Hotkey();
         registerIpcHandlers(this.configManager, this);
+    }
+
+    /**
+     * Registers the F5 hotkey to reload the current page.
+     */
+    registerF5Hotkey() {
+        try {
+            globalShortcut.register('F5', () => {
+                const visibleWindow = [...this.profileWindows.values()].find(win => win.isVisible());
+                if (visibleWindow) {
+                    const profileId = [...this.profileWindows.entries()].find(([id, win]) => win === visibleWindow)[0];
+                    this.reloadProfileWindow(profileId);
+                }
+            });
+        } catch (e) {
+            dialog.showErrorBox('Hotkey Error', 'Failed to register F5 hotkey.');
+        }
+    }
+
+    /**
+     * Reloads a profile's window to its kioskURL.
+     * @param {string} profileId The ID of the profile to reload.
+     */
+    reloadProfileWindow(profileId) {
+        const window = this.profileWindows.get(profileId);
+        const profile = this.profiles.find(p => p.id === profileId);
+        if (window && profile) {
+            window.loadURL(profile.kioskURL);
+        }
     }
 
     /**
