@@ -8,7 +8,7 @@ Turn any webpage into an instant, native-feeling panel that you can toggle with 
 
 Unlike a browser shortcut, this app runs silently in the background, keeping your page pre-loaded in memory. When you press the hotkey, the window appears **instantly**. No browser launch, no page load, no delay. Press it again, and it vanishes.
 
-## ✨ Key Features
+## Key Features
 
 * **⚡ Instant Access:** Toggle a fullscreen, borderless window with your content on command.
 * **🗂️ Multi-Profile Management:** Create and manage multiple profiles, each with its own unique URL, hotkey, and display name.
@@ -16,7 +16,7 @@ Unlike a browser shortcut, this app runs silently in the background, keeping you
 * **⌨️ Visual Hotkey Picker:** Easily set up key combinations using a visual keyboard interface, including modifiers like `Ctrl`, `Alt`, `Shift`, and Numpad keys.
 * **🚀 Launch on Startup:** Configure the app to start automatically with your operating system for seamless access.
 
-## 🎬 Demo
+## Demo
 
 *(Note: The GIFs below might reflect an older UI. They will be updated soon to showcase the new multi-profile manager.)*
 
@@ -29,7 +29,7 @@ Unlike a browser shortcut, this app runs silently in the background, keeping you
 #### Toggling the window with the assigned hotkey:
 <img src="demo/Execution.gif" alt="Execution" width="700" />
 
-## 🚀 Installation
+## Installation
 
 ### Option 1: Use the Release (Recommended)
 
@@ -52,7 +52,7 @@ Unlike a browser shortcut, this app runs silently in the background, keeping you
     ```
     This will create an installer in the `dist` folder.
 
-## 👨‍💻 How to Use
+## How to Use
 
 Once launched, the application icon will appear in your system tray (near the clock).
 
@@ -64,7 +64,7 @@ Once launched, the application icon will appear in your system tray (near the cl
     * Click `Save Changes` to apply your updates or `Delete Profile` to remove the selected one.
 3.  **Enable/Disable Startup:** Right-click the tray icon and check/uncheck `Start with Windows`.
 
-## 💻 Compatibility
+## Compatibility
 
 This application is built with Electron and is primarily tested on **Windows**. While it may work on macOS and Linux, the `Start with Windows` feature is OS-specific and would require manual configuration on other platforms.
 
