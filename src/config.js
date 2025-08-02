@@ -8,15 +8,21 @@ const urlInput = document.getElementById('url');
 const nameInput = document.getElementById('name');
 const hotkeyDisplay = document.getElementById('hotkey-display');
 const errorMessage = document.getElementById('error-message');
+const successMessage = document.getElementById('success-message');
 
 document.addEventListener('DOMContentLoaded', async () => {
     loadProfiles();
 });
 
-async function loadProfiles() {
+async function loadProfiles(profileIdToSelect = null) {
     profiles = await window.api.getProfiles();
     renderProfileList();
-    if (profiles.length > 0) {
+
+    const profileToSelect = profiles.find(p => p.id === profileIdToSelect);
+
+    if (profileToSelect) {
+        selectProfile(profileToSelect.id);
+    } else if (profiles.length > 0) {
         selectProfile(profiles[0].id);
     } else {
         resetForm();
@@ -47,6 +53,7 @@ function selectProfile(profileId) {
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
         errorMessage.style.display = 'none';
+        successMessage.style.display = 'none';
     }
     renderProfileList();
 }
@@ -58,6 +65,7 @@ function resetForm() {
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
     errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
     selectedProfileId = null;
 }
 
@@ -71,11 +79,11 @@ document.getElementById('add-profile-btn').addEventListener('click', async () =>
     const result = await window.api.addProfile(profileData);
 
     if (result.success) {
-        await loadProfiles();
-        selectProfile(result.profile.id);
+        await loadProfiles(result.profile.id);
     } else {
         errorMessage.textContent = result.error;
         errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
     }
 });
 
@@ -91,6 +99,7 @@ window.api.onHotkeyUpdate((hotkey) => {
 document.getElementById('config-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     errorMessage.style.display = 'none';
+    successMessage.style.display = 'none';
 
     const profileData = {
         kioskURL: urlInput.value,
@@ -106,10 +115,10 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
     }
 
     if (result.success) {
-        loadProfiles();
-        if (result.profile) {
-            selectProfile(result.profile.id);
-        }
+        const idToSelect = selectedProfileId || (result.profile ? result.profile.id : null);
+        await loadProfiles(idToSelect);
+        successMessage.textContent = 'Profile saved successfully!';
+        successMessage.style.display = 'block';
     } else {
         errorMessage.textContent = result.error;
         errorMessage.style.display = 'block';
@@ -125,6 +134,6 @@ document.getElementById('delete-profile-btn').addEventListener('click', async ()
     } else {
         errorMessage.textContent = result.error;
         errorMessage.style.display = 'block';
+        successMessage.style.display = 'none';
     }
 });
-
