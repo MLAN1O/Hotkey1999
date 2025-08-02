@@ -2,125 +2,141 @@
 const { app } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 
 class ConfigManager {
     constructor() {
         this.userDataPath = app.getPath('userData');
+        this.profilesPath = path.join(this.userDataPath, 'profiles.json');
+        this.profiles = this.loadProfiles();
     }
 
     /**
-     * Determines the configuration file path based on the instance ID.
-     * @param {string} instanceId The ID of the instance.
-     * @returns {string} The full path to the configuration file.
+     * Loads all profiles from the master configuration file (profiles.json).
+     * If the file doesn't exist, it creates a default profile.
+     * @returns {Array<object>} The array of profile objects.
      */
-    getInstanceConfigPath(instanceId) {
-        const effectiveInstanceId = instanceId || 'default';
-        return path.join(this.userDataPath, `config-${effectiveInstanceId}.json`);
-    }
-
-    /**
-     * Loads the configuration for a specific instance.
-     * @param {string} instanceId The ID of the instance.
-     * @returns {object} The configuration object.
-     */
-    loadConfig(instanceId) {
-        const configPath = this.getInstanceConfigPath(instanceId);
-        let config = {};
+    loadProfiles() {
         try {
-            if (fs.existsSync(configPath)) {
-                config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            if (fs.existsSync(this.profilesPath)) {
+                const data = fs.readFileSync(this.profilesPath, 'utf-8');
+                return JSON.parse(data);
             } else {
-                // Default configuration for a new instance
-                config = {
-                    kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders_(Atari_2600_video_game)',
+                // Create a default profile if the file doesn't exist
+                const defaultProfile = {
+                    id: crypto.randomUUID().substring(0, 8),
+                    kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
                     hotkey: 'Home',
-                    displayName: `HotkeyMyURLInstance-${instanceId || 'Default'}`,
-                    iconPath: path.join(__dirname, 'assets/icon.png'),
+                    displayName: 'Default Profile',
                     startWithWindows: false
                 };
+                this.saveProfiles([defaultProfile]);
+                return [defaultProfile];
             }
         } catch (error) {
-            console.error(`Error loading config for instance ${instanceId} from ${configPath}:`, error);
-            // Fallback configuration in case of errors
-            config = {
-                kioskURL: 'https://example.com/error',
-                hotkey: '',
-                displayName: `Error Loading Config`,
-                iconPath: path.join(__dirname, 'icon.png'),
-                startWithWindows: false
-            };
+            console.error('Error loading profiles:', error);
+            return [];
         }
-        config.instanceId = instanceId;
-        return config;
     }
 
     /**
-     * Saves the configuration for an existing instance.
-     * @param {object} newConfig The new settings.
-     * @param {string} instanceId The ID of the instance.
-     * @returns {object|null} The updated configuration object or null on failure.
+     * Saves the entire array of profiles to the master configuration file.
+     * @param {Array<object>} profiles The array of profiles to save.
      */
-    saveConfig(newConfig, instanceId) {
-        const configPath = this.getInstanceConfigPath(instanceId);
+    saveProfiles(profiles) {
         try {
-            const currentInstanceConfig = this.loadConfig(instanceId);
-            const updatedConfig = { ...currentInstanceConfig, ...newConfig };
-            fs.writeFileSync(configPath, JSON.stringify(updatedConfig, null, 2));
-            console.log(`Configuration UPDATED for instance ${instanceId} at: ${configPath}`);
-            return updatedConfig;
+            fs.writeFileSync(this.profilesPath, JSON.stringify(profiles, null, 2));
+            this.profiles = profiles; // Update the in-memory profiles
         } catch (error) {
-            console.error(`Failed to save configuration for instance ${instanceId}:`, error);
-            return null;
+            console.error('Failed to save profiles:', error);
         }
     }
 
     /**
-     * Creates and saves the configuration file for a NEW instance.
-     * @param {object} initialConfig The complete initial configuration object.
-     * @param {string} instanceId The ID of the new instance.
-     * @returns {object|null} The saved configuration object or null on failure.
+     * Adds a new profile to the configuration.
+     * @param {object} profileData The data for the new profile.
+     * @returns {object} The newly created profile object.
      */
-    createInstanceConfig(initialConfig, instanceId) {
-        const configPath = this.getInstanceConfigPath(instanceId);
-        try {
-            fs.writeFileSync(configPath, JSON.stringify(initialConfig, null, 2));
-            console.log(`Initial configuration created for new instance ${instanceId} at: ${configPath}`);
-            return initialConfig;
-        } catch (error) {
-            console.error(`Failed to create configuration for new instance ${instanceId}:`, error);
-            return null;
-        }
+    addProfile(profileData) {
+        const newProfile = {
+            id: crypto.randomUUID().substring(0, 8),
+            ...profileData
+        };
+        const profiles = this.getProfiles();
+        profiles.push(newProfile);
+        this.saveProfiles(profiles);
+        return newProfile;
     }
 
     /**
-     * Checks if a hotkey is already in use by another instance.
+     * Updates an existing profile.
+     * @param {string} profileId The ID of the profile to update.
+     * @param {object} updatedData The new data for the profile.
+     * @returns {object|null} The updated profile object or null if not found.
+     */
+    updateProfile(profileId, updatedData) {
+        const profiles = this.getProfiles();
+        const profileIndex = profiles.findIndex(p => p.id === profileId);
+        if (profileIndex !== -1) {
+            profiles[profileIndex] = { ...profiles[profileIndex], ...updatedData };
+            this.saveProfiles(profiles);
+            return profiles[profileIndex];
+        }
+        return null;
+    }
+
+    /**
+     * Deletes a profile.
+     * @param {string} profileId The ID of the profile to delete.
+     * @returns {boolean} True if deletion was successful, false otherwise.
+     */
+    deleteProfile(profileId) {
+        let profiles = this.getProfiles();
+        const initialLength = profiles.length;
+        profiles = profiles.filter(p => p.id !== profileId);
+        if (profiles.length < initialLength) {
+            this.saveProfiles(profiles);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Gets all profiles.
+     * @returns {Array<object>} The array of all profiles.
+     */
+    getProfiles() {
+        return this.profiles;
+    }
+
+    /**
+     * Gets a single profile by its ID.
+     * @param {string} profileId The ID of the profile to find.
+     * @returns {object|undefined} The profile object or undefined if not found.
+     */
+    getProfileById(profileId) {
+        return this.getProfiles().find(p => p.id === profileId);
+    }
+
+    /**
+     * Checks if a hotkey is already in use by another profile.
      * @param {string} hotkey The hotkey to check.
-     * @param {string} currentInstanceId The ID of the current instance (to be ignored in the check).
-     * @returns {{isDuplicate: boolean, conflictingInstance: string|null}}
+     * @param {string} currentProfileId The ID of the current profile (to be ignored in the check).
+     * @returns {{isDuplicate: boolean, conflictingProfile: string|null}}
      */
-    isHotkeyDuplicate(hotkey, currentInstanceId) {
+    isHotkeyDuplicate(hotkey, currentProfileId) {
         if (!hotkey) {
-            return { isDuplicate: false, conflictingInstance: null };
+            return { isDuplicate: false, conflictingProfile: null };
         }
 
-        const allConfigFiles = fs.readdirSync(this.userDataPath).filter(f => f.startsWith('config-') && f.endsWith('.json'));
+        const profiles = this.getProfiles();
+        const conflictingProfile = profiles.find(p => p.hotkey === hotkey && p.id !== currentProfileId);
 
-        for (const file of allConfigFiles) {
-            const instanceId = file.replace('config-', '').replace('.json', '');
-            if (instanceId === currentInstanceId) {
-                continue; // Skip self-check
-            }
-            try {
-                const configContent = JSON.parse(fs.readFileSync(path.join(this.userDataPath, file), 'utf-8'));
-                if (configContent.hotkey === hotkey) {
-                    const instanceName = configContent.displayName || `ID: ${instanceId}`;
-                    return { isDuplicate: true, conflictingInstance: instanceName };
-                }
-            } catch (e) {
-                console.error(`Error reading config file ${file}:`, e);
-            }
+        if (conflictingProfile) {
+            return { isDuplicate: true, conflictingProfile: conflictingProfile.displayName };
         }
-        return { isDuplicate: false, conflictingInstance: null };
+
+        return { isDuplicate: false, conflictingProfile: null };
     }
 }
 

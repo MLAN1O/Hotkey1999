@@ -2,55 +2,61 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Settings</title>
+    <title>Profile Manager</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; display: flex; gap: 20px; }
+        #profile-list-container { width: 250px; }
+        #profile-list { list-style-type: none; padding: 0; margin: 0; background-color: #fff; border-radius: 5px; max-height: 600px; overflow-y: auto; }
+        #profile-list li { padding: 10px; border-bottom: 1px solid #ccc; cursor: pointer; }
+        #profile-list li:hover { background-color: #e9ecef; }
+        #profile-list li.selected { background-color: #007bff; color: white; }
+        #profile-form-container { flex-grow: 1; }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
         input[type="text"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
-        button { padding: 10px 15px; border: none; border-radius: 5px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; }
+        button { padding: 10px 15px; border: none; border-radius: 5px; background-color: #007bff; color: white; font-size: 16px; cursor: pointer; margin-right: 10px; }
+        button.danger { background-color: #dc3545; }
         #hotkey-display { background-color: #fff; border: 1px solid #ccc; padding: 10px; border-radius: 5px; min-height: 20px; font-weight: bold; }
-        small { color: #555; font-style: italic; }
-        code { background-color: #e5e7eb; padding: 2px 4px; border-radius: 3px; }
+        .error-message { color: #dc3545; font-weight: bold; margin-top: 5px; }
     </style>
 </head>
 <body>
-    <h1>Settings</h1>
-    <div class="info-display">
-        <p><strong>Instance ID:</strong> <span id="instance-id-display">Loading...</span></p>
+    <div id="profile-list-container">
+        <h2>Profiles</h2>
+        <ul id="profile-list"></ul>
+        
+        <div style="margin-top: 20px;"></div>
+        
+        <button id="add-profile-btn">New Profile</button>
     </div>
 
-    <form id="config-form">
-        <div class="form-group">
-            <label for="url">URL to load:</label>
-            <input type="text" id="url" name="url" required>
-        </div>
-        <div class="form-group">
-            <label for="name">Name to display in tray:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div class="form-group">
-            <label>Application Hotkey:</label>
-            <div class="hotkey-container">
-                <span id="hotkey-display"></span>
-                <button type="button" id="select-hotkey-btn" class="button">Select Hotkey</button>
+    <div id="profile-form-container">
+        <h1>Profile Settings</h1>
+        <form id="config-form">
+            <input type="hidden" id="profile-id">
+            <div class="form-group">
+                <label for="url">URL to load:</label>
+                <input type="text" id="url" name="url" required>
             </div>
-            <p id="hotkey-error" class="error-message" style="display: none;"></p>
-        </div>
-        <div class="form-group">
-            <label>Application Icon:</label>
-            <button type="button" id="select-icon-btn" class="button">Select Icon File (.png, .ico)</button>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="button primary-button">Save and Apply</button>
-        </div>
-    </form>
-
-    <div class="separator"></div>
-
-    <div class="form-actions" style="margin-top: 20px;">
-        <button id="add-new-instance-btn" class="button">Clone Settings to New Instance</button>
+            <div class="form-group">
+                <label for="name">Display Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Hotkey:</label>
+                <div style="display: flex; align-items: center;">
+                    <span id="hotkey-display" style="flex-grow: 1;"></span>
+                    <button type="button" id="select-hotkey-btn">Select</button>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit">Save Changes</button>
+                <button type="button" id="delete-profile-btn" class="danger">Delete Profile</button>
+            </div>
+            <p id="error-message" class="error-message" style="display: none;"></p>
+        </form>
     </div>
+
     <script src="./config.js"></script>
 </body>
 </html>

@@ -1,26 +1,29 @@
 // main.js
 const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog } = require('electron');
 const path = require('path');
-const fs = require('fs');
 const ConfigManager = require('./ConfigManager');
 const { registerIpcHandlers } = require('./ipcHandlers');
 
+/**
+ * Main application class for HotkeyMyURL.
+ * Manages multiple profiles, windows, and global hotkeys in a single instance.
+ */
 class MainApp {
     constructor() {
         this.configManager = new ConfigManager();
-        this.currentInstanceId = null;
-        this.win = null;
+        this.profiles = [];
+        this.profileWindows = new Map(); // <profileId, BrowserWindow>
         this.configWin = null;
         this.hotkeyWin = null;
         this.tray = null;
-        this.lastWindowState = {};
         this.isQuitting = false;
-        this.config = null;
     }
 
+    /**
+     * Initializes the application, loads profiles, and sets up app events.
+     */
     init() {
-        this.currentInstanceId = this.getInstanceIdFromArgs();
-        this.config = this.configManager.loadConfig(this.currentInstanceId);
+        this.profiles = this.configManager.getProfiles();
 
         app.disableHardwareAcceleration();
         app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -30,182 +33,240 @@ class MainApp {
         app.on('window-all-closed', () => this.onWindowAllClosed());
     }
 
-    getInstanceIdFromArgs() {
-        const args = process.argv;
-        const instanceArg = args.find(arg => arg.startsWith('--instanceId='));
-        return instanceArg ? instanceArg.split('=')[1] : 'default';
-    }
-
+    /**
+     * Called when the app is ready. Creates the tray icon, profile windows, and registers handlers.
+     */
     onReady() {
         this.createTray();
-        this.createWindow();
-        this.registerGlobalShortcuts();
-        app.on('activate', () => !this.win && this.createWindow());
+        this.profiles.forEach(profile => {
+            this.createProfileWindow(profile);
+            this.registerProfileShortcut(profile);
+        });
         registerIpcHandlers(this.configManager, this);
     }
 
+    /**
+     * Called before the app quits. Unregisters all shortcuts.
+     */
     onWillQuit() {
         this.isQuitting = true;
         globalShortcut.unregisterAll();
     }
 
+    /**
+     * Called when all windows are closed. Quits the app if not on macOS.
+     */
     onWindowAllClosed() {
         if (process.platform !== 'darwin') {
             app.quit();
         }
     }
 
-    toggleMainWindow() {
-        if (!this.win) return;
-        this.win.isVisible() ? this.win.hide() : this.restoreWindow();
+    /**
+     * Creates a BrowserWindow for a given profile.
+     * @param {object} profile The profile to create a window for.
+     */
+    createProfileWindow(profile) {
+        const newWindow = new BrowserWindow({
+            show: false,
+            width: 1024, height: 768,
+            autoHideMenuBar: true,
+            icon: path.join(__dirname, '../build/icon.ico'),
+            webPreferences: { backgroundThrottling: false }
+        });
+
+        newWindow.loadURL(profile.kioskURL);
+        newWindow.setFullScreen(true);
+
+        newWindow.on('close', (e) => {
+            if (!this.isQuitting) {
+                e.preventDefault();
+                newWindow.hide();
+            }
+        });
+
+        newWindow.on('blur', () => newWindow.webContents.setAudioMuted(true));
+        newWindow.on('focus', () => newWindow.webContents.setAudioMuted(false));
+
+        this.profileWindows.set(profile.id, newWindow);
     }
 
+    /**
+     * Registers a global shortcut for a profile.
+     * @param {object} profile The profile to register the shortcut for.
+     */
+    registerProfileShortcut(profile) {
+        if (profile.hotkey) {
+            try {
+                globalShortcut.register(profile.hotkey, () => this.toggleProfileWindow(profile.id));
+            } catch (e) {
+                dialog.showErrorBox('Hotkey Error', `Failed to register hotkey "${profile.hotkey}" for ${profile.displayName}.`);
+            }
+        }
+    }
+
+    /**
+     * Toggles the visibility of a profile's window.
+     * @param {string} profileId The ID of the profile to toggle.
+     */
+    toggleProfileWindow(profileId) {
+        const window = this.profileWindows.get(profileId);
+        if (!window) return;
+
+        if (window.isVisible()) {
+            window.hide();
+        } else {
+            this.profileWindows.forEach((win, id) => {
+                if (id !== profileId && win.isVisible()) {
+                    win.hide();
+                }
+            });
+            window.show();
+            window.focus();
+        }
+    }
+
+    /**
+     * Creates the application tray icon and context menu.
+     */
     createTray() {
-        const trayIconPath = fs.existsSync(this.config.iconPath) ? this.config.iconPath : path.join(__dirname, 'assets/icon.png');
+        const trayIconPath = path.join(__dirname, 'assets/icon.png');
         this.tray = new Tray(trayIconPath);
-        this.tray.setToolTip(`${this.config.displayName} (Running...)`);
+        this.tray.setToolTip('HotkeyMyURL Manager (Running...)');
 
         const contextMenu = Menu.buildFromTemplate([
-            { label: 'Open', click: () => this.restoreWindow() },
             { label: 'Settings', click: () => this.createConfigWindow() },
             {
                 label: 'Start with Windows',
                 type: 'checkbox',
-                checked: this.config.startWithWindows,
+                checked: app.getLoginItemSettings().openAtLogin,
                 click: (menuItem) => this.toggleStartWithWindows(menuItem.checked)
             },
             { type: 'separator' },
             { label: 'Exit', click: () => { this.isQuitting = true; app.quit(); } }
         ]);
         this.tray.setContextMenu(contextMenu);
-        this.tray.on('click', () => this.restoreWindow());
     }
 
+    /**
+     * Toggles the 'Start with Windows' setting.
+     * @param {boolean} startWithWindows Whether the app should start with Windows.
+     */
     toggleStartWithWindows(startWithWindows) {
         app.setLoginItemSettings({
             openAtLogin: startWithWindows,
-            args: ['--hidden', `--instanceId=${this.currentInstanceId}`]
+            args: ['--hidden'] // The main process will handle showing/hiding windows.
         });
-        this.configManager.saveConfig({ startWithWindows }, this.currentInstanceId);
-        this.config.startWithWindows = startWithWindows;
     }
 
+    /**
+     * Creates the configuration window.
+     */
     createConfigWindow() {
         if (this.configWin) return this.configWin.focus();
         this.configWin = new BrowserWindow({
-            width: 1024, height: 768, title: `Settings for Instance: ${this.config.displayName}`,
+            width: 1024, height: 768, title: 'HotkeyMyURL Settings',
             autoHideMenuBar: true,
-            webPreferences: { preload: path.join(__dirname, 'preload-config.js') }
+            webPreferences: { 
+                preload: path.join(__dirname, 'preload-config.js'),
+                contextIsolation: true,
+                nodeIntegration: false
+            }
         });
         this.configWin.loadFile(path.join(__dirname, 'config.html'));
         this.configWin.on('closed', () => { this.configWin = null; });
     }
 
-    createHotkeyWindow() {
+    /**
+     * Creates the hotkey selection window.
+     */
+    createHotkeyWindow(currentHotkey) {
         if (this.hotkeyWin) return this.hotkeyWin.focus();
         this.hotkeyWin = new BrowserWindow({
             width: 1024, height: 768, title: 'Select Hotkey', parent: this.configWin, modal: true,
             autoHideMenuBar: true,
-            webPreferences: { preload: path.join(__dirname, 'preload-hotkey.js') }
+            webPreferences: { 
+                preload: path.join(__dirname, 'preload-hotkey.js'),
+                contextIsolation: true,
+                nodeIntegration: false
+            }
         });
-        this.hotkeyWin.loadFile(path.join(__dirname, 'hotkey.html'));
+        const url = new URL(path.join(__dirname, 'hotkey.html'), 'file:');
+        if (currentHotkey) {
+            url.searchParams.append('hotkey', currentHotkey);
+        }
+        this.hotkeyWin.loadURL(url.href);
         this.hotkeyWin.on('closed', () => { this.hotkeyWin = null; });
     }
 
-    restoreWindow() {
-        if (!this.win) return;
-        if (this.win.isVisible()) return this.win.focus();
+    /**
+     * Updates the application after a profile has been changed.
+     * @param {string} profileId The ID of the profile that was updated.
+     */
+    updateAppWithNewConfig(profileId) {
+        const oldProfile = this.profiles.find(p => p.id === profileId);
+        this.profiles = this.configManager.getProfiles();
+        const newProfile = this.profiles.find(p => p.id === profileId);
 
-        if (this.lastWindowState.isFullScreen) this.win.setFullScreen(true);
-        else if (this.lastWindowState.bounds) {
-            this.win.setFullScreen(false);
-            this.win.setBounds(this.lastWindowState.bounds);
-        } else this.win.setFullScreen(true);
-        this.win.show();
-        this.win.focus();
+        if (oldProfile && newProfile) {
+            this.updateProfileWindow(profileId, oldProfile, newProfile);
+            this.updateProfileShortcut(oldProfile, newProfile);
+        }
     }
 
-    saveWindowState() {
-        if (!this.win) return;
-        this.lastWindowState = {
-            isFullScreen: this.win.isFullScreen(),
-            bounds: this.win.isMinimized() ? this.lastWindowState.bounds : this.win.getBounds()
-        };
+    /**
+     * Updates a profile's window with new settings.
+     * @param {string} profileId The ID of the profile to update.
+     * @param {object} oldProfile The old profile data.
+     * @param {object} newProfile The new profile data.
+     */
+    updateProfileWindow(profileId, oldProfile, newProfile) {
+        const window = this.profileWindows.get(profileId);
+        if (!window) return;
+
+        if (newProfile.kioskURL !== oldProfile.kioskURL) {
+            window.loadURL(newProfile.kioskURL);
+        }
     }
 
-    createWindow() {
-        this.win = new BrowserWindow({
-            show: false, width: 1024, height: 768, autoHideMenuBar: true,
-            icon: path.join(__dirname, '../build/icon.ico'),
-            webPreferences: { backgroundThrottling: false }
-        });
-        this.win.loadURL(this.config.kioskURL);
-        this.win.setFullScreen(true);
-
-        if (!process.argv.includes('--hidden')) this.win.show();
-        else this.saveWindowState();
-
-        this.win.on('close', (e) => { if (!this.isQuitting) { e.preventDefault(); this.saveWindowState(); this.win.hide(); } });
-        this.win.on('resize', () => this.saveWindowState());
-        this.win.on('move', () => this.saveWindowState());
-        this.win.on('enter-full-screen', () => this.saveWindowState());
-        this.win.on('leave-full-screen', () => this.saveWindowState());
-        this.win.on('blur', () => this.win.webContents.setAudioMuted(true));
-        this.win.on('focus', () => this.win.webContents.setAudioMuted(false));
-        this.win.webContents.on('page-title-updated', (e, title) => {
-            if (this.tray) this.tray.setToolTip(`${this.config.displayName || title} (Running)`);
-        });
-    }
-
-    registerGlobalShortcuts() {
-        if (this.config.hotkey) {
-            try {
-                globalShortcut.register(this.config.hotkey, () => this.toggleMainWindow());
-            } catch (e) {
-                dialog.showErrorBox('Hotkey Error', `Failed to register hotkey "${this.config.hotkey}".`);
+    /**
+     * Updates a profile's global shortcut.
+     * @param {object} oldProfile The old profile data.
+     * @param {object} newProfile The new profile data.
+     */
+    updateProfileShortcut(oldProfile, newProfile) {
+        if (newProfile.hotkey !== oldProfile.hotkey) {
+            if (oldProfile.hotkey) {
+                globalShortcut.unregister(oldProfile.hotkey);
             }
-        }
-        globalShortcut.register('F5', () => this.win.webContents.reload());
-    }
-
-    updateAppWithNewConfig(oldConfig, newConfig) {
-        this.config = newConfig;
-        this.updateTray(newConfig);
-        this.updateMainWindow(oldConfig, newConfig);
-        this.updateGlobalShortcut(oldConfig, newConfig);
-    }
-
-    updateTray(newSettings) {
-        if (newSettings.iconPath && fs.existsSync(newSettings.iconPath)) {
-            this.tray.setImage(newSettings.iconPath);
-        }
-        if (newSettings.displayName) {
-            this.tray.setToolTip(`${newSettings.displayName} (Running)`);
+            this.registerProfileShortcut(newProfile);
         }
     }
 
-    updateMainWindow(oldConfig, newSettings) {
-        if (newSettings.kioskURL !== oldConfig.kioskURL) {
-            this.win.loadURL(newSettings.kioskURL);
+    /**
+     * Unregisters a profile's global shortcut.
+     * @param {object} profile The profile to unregister the shortcut for.
+     */
+    unregisterProfileShortcut(profile) {
+        if (profile.hotkey) {
+            globalShortcut.unregister(profile.hotkey);
         }
     }
 
-    updateGlobalShortcut(oldConfig, newSettings) {
-        if (newSettings.hotkey !== oldConfig.hotkey) {
-            if (oldConfig.hotkey) globalShortcut.unregister(oldConfig.hotkey);
-            if (newSettings.hotkey) {
-                try {
-                    globalShortcut.register(newSettings.hotkey, () => this.toggleMainWindow());
-                } catch (e) {
-                    dialog.showErrorBox('Hotkey Error', `Failed to register hotkey "${newSettings.hotkey}".`);
-                }
-            }
+    /**
+     * Destroys a profile's BrowserWindow.
+     * @param {string} profileId The ID of the profile whose window should be destroyed.
+     */
+    destroyProfileWindow(profileId) {
+        const window = this.profileWindows.get(profileId);
+        if (window) {
+            window.destroy();
+            this.profileWindows.delete(profileId);
         }
     }
 
     // Methods called from ipcHandlers
-    getCurrentInstanceId = () => this.currentInstanceId;
-    getConfig = () => this.config;
+    getProfiles = () => this.profiles;
     sendHotkeyToConfigWindow = (hotkey) => this.configWin?.webContents.send('hotkey-updated', hotkey);
     closeHotkeyWindow = () => this.hotkeyWin?.close();
     closeConfigWindow = () => this.configWin?.close();

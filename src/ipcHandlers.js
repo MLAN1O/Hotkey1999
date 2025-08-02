@@ -1,24 +1,12 @@
 // ipcHandlers.js
-const { ipcMain, dialog, app } = require('electron');
-const crypto = require('crypto');
-const child_process = require('child_process');
+const { ipcMain, dialog } = require('electron');
 
 function registerIpcHandlers(configManager, mainApp) {
-    // Handler to get the current configuration for the instance.
-    ipcMain.handle('get-config', () => configManager.loadConfig(mainApp.getCurrentInstanceId()));
-
-    // Handler to open a file dialog for selecting an icon.
-    ipcMain.handle('open-file-dialog', async () => {
-        const { canceled, filePaths } = await dialog.showOpenDialog({
-            title: 'Select Icon',
-            properties: ['openFile'],
-            filters: [{ name: 'Images', extensions: ['png', 'ico'] }]
-        });
-        return !canceled ? filePaths[0] : undefined;
-    });
+    // Handler to get all profiles.
+    ipcMain.handle('get-profiles', () => configManager.getProfiles());
 
     // Handler to open the hotkey selection window.
-    ipcMain.on('open-hotkey-window', () => mainApp.createHotkeyWindow());
+    ipcMain.on('open-hotkey-window', (event, currentHotkey) => mainApp.createHotkeyWindow(currentHotkey));
 
     // Handler for when a hotkey is selected in the hotkey window.
     ipcMain.on('hotkey-selected', (event, hotkey) => {
@@ -26,65 +14,61 @@ function registerIpcHandlers(configManager, mainApp) {
         mainApp.closeHotkeyWindow();
     });
 
-    // Handler to save the updated configuration.
-    ipcMain.handle('save-config', (event, newSettings) => {
-        const currentInstanceId = mainApp.getCurrentInstanceId();
-        const { isDuplicate, conflictingInstance } = configManager.isHotkeyDuplicate(newSettings.hotkey, currentInstanceId);
+    // Handler to add a new profile.
+    ipcMain.handle('add-profile', (event, profileData) => {
+        const { isDuplicate, conflictingProfile } = configManager.isHotkeyDuplicate(profileData.hotkey, null);
         if (isDuplicate) {
             return {
                 success: false,
-                error: `Hotkey is already in use by "${conflictingInstance}". Please choose another.`
+                error: `Hotkey is already in use by "${conflictingProfile}". Please choose another.`
             };
         }
 
-        const oldConfig = { ...mainApp.getConfig() };
-        const newConfig = configManager.saveConfig(newSettings, currentInstanceId);
-
-        if (newConfig) {
-            mainApp.updateAppWithNewConfig(oldConfig, newConfig);
-            mainApp.closeConfigWindow();
-            return { success: true };
+        const newProfile = configManager.addProfile(profileData);
+        if (newProfile) {
+            mainApp.createProfileWindow(newProfile);
+            mainApp.registerProfileShortcut(newProfile);
+            return { success: true, profile: newProfile };
         } else {
-            return { success: false, error: 'Failed to save settings.' };
+            return { success: false, error: 'Failed to save the new profile.' };
         }
     });
 
-    // Handler to create a new application instance.
-    ipcMain.handle('create-new-instance', async (event, newInstanceSettings) => {
-        const { isDuplicate, conflictingInstance } = configManager.isHotkeyDuplicate(newInstanceSettings.hotkey, null);
+    // Handler to update an existing profile.
+    ipcMain.handle('update-profile', (event, profileId, updatedData) => {
+        const { isDuplicate, conflictingProfile } = configManager.isHotkeyDuplicate(updatedData.hotkey, profileId);
         if (isDuplicate) {
             return {
                 success: false,
-                error: `Hotkey is already in use by "${conflictingInstance}". Please choose another.`
+                error: `Hotkey is already in use by "${conflictingProfile}". Please choose another.`
             };
         }
 
-        const newInstanceId = crypto.randomUUID().substring(0, 8);
-        const savedNewConfig = configManager.createInstanceConfig(newInstanceSettings, newInstanceId);
+        const oldProfile = { ...configManager.getProfileById(profileId) };
+        const updatedProfile = configManager.updateProfile(profileId, updatedData);
 
-        if (savedNewConfig) {
-            const argsForNewInstance = [`--instanceId=${newInstanceId}`];
-            if (!app.isPackaged) {
-                // Add the app path to the arguments when in development mode
-                argsForNewInstance.unshift(app.getAppPath());
-            }
+        if (updatedProfile) {
+            mainApp.updateProfileWindow(profileId, oldProfile, updatedProfile);
+            mainApp.updateProfileShortcut(oldProfile, updatedProfile);
+            return { success: true, profile: updatedProfile };
+        } else {
+            return { success: false, error: 'Failed to update the profile.' };
+        }
+    });
 
-            const executablePath = process.execPath;
-            const newProcess = child_process.spawn(executablePath, argsForNewInstance, {
-                detached: true,
-                stdio: 'ignore'
-            });
-            newProcess.unref();
+    // Handler to delete a profile.
+    ipcMain.handle('delete-profile', (event, profileId) => {
+        const profileToDelete = configManager.getProfileById(profileId);
+        if (profileToDelete && profileToDelete.hotkey) {
+            mainApp.unregisterProfileShortcut(profileToDelete);
+        }
 
-            if (savedNewConfig.startWithWindows) {
-                // This requires OS-specific implementation and might need user interaction or admin rights.
-                console.warn(`"Start with Windows" for new instance '${newInstanceId}' requires manual OS-specific implementation.`);
-            }
-
-            mainApp.closeConfigWindow();
+        const success = configManager.deleteProfile(profileId);
+        if (success) {
+            mainApp.destroyProfileWindow(profileId);
             return { success: true };
         } else {
-            return { success: false, error: 'Failed to save the new instance configuration.' };
+            return { success: false, error: 'Failed to delete the profile.' };
         }
     });
 }
