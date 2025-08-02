@@ -23,14 +23,28 @@ class MainApp {
      * Initializes the application, loads profiles, and sets up app events.
      */
     init() {
-        this.profiles = this.configManager.getProfiles();
+        const gotTheLock = app.requestSingleInstanceLock();
 
-        app.disableHardwareAcceleration();
-        app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+        if (!gotTheLock) {
+            app.quit();
+        } else {
+            app.on('second-instance', () => {
+                if (this.configWin) {
+                    if (this.configWin.isMinimized()) this.configWin.restore();
+                    this.configWin.focus();
+                } else {
+                    this.createConfigWindow();
+                }
+            });
 
-        app.whenReady().then(() => this.onReady());
-        app.on('will-quit', () => this.onWillQuit());
-        app.on('window-all-closed', () => this.onWindowAllClosed());
+            this.profiles = this.configManager.getProfiles();
+            app.disableHardwareAcceleration();
+            app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
+            app.whenReady().then(() => this.onReady());
+            app.on('will-quit', () => this.onWillQuit());
+            app.on('window-all-closed', () => this.onWindowAllClosed());
+        }
     }
 
     /**
@@ -196,7 +210,7 @@ class MainApp {
     createConfigWindow() {
         if (this.configWin) return this.configWin.focus();
         this.configWin = new BrowserWindow({
-            width: 1024, height: 768, title: 'HotkeyMyURL Settings',
+            width: 1024, height: 768, title: 'HotkeyMyURL Manager',
             autoHideMenuBar: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { 

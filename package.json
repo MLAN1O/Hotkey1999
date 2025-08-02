@@ -1,6 +1,6 @@
 {
   "name": "hotkeymyurllikeits1999",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple app to open a URL with a global hotkey.",
   "author": "Max L. Mendes",
   "main": "src/main.js",
