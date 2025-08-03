@@ -31,14 +31,17 @@ Perfect for:
 
 ## Cool Features
 
-* ⚡ **Instant Launch:** Opens your web page in milliseconds — no loading, no waiting.
-* 🖥️ **Fullscreen by Default:** Clean, borderless, distraction-free. Just like a native app.
-* ⌨️ **Hotkey for Everything:** Assign a custom hotkey to each profile (Numpad and modifiers supported).
-* 🗂️ **Multiple Profiles:** Set up different URLs with unique names and shortcuts.
-* 🪟 **Smart Window Sizing:** Want it smaller than fullscreen? Press F11, resize it — we’ll remember it for next time.
-* 🔁 **Quick Refresh:** Hit F5 to reload the original URL instantly.
-* 🚀 **Start with Windows:** Keep it ready in the background from the moment you log in.
-* ⚙️ **Lightweight & Silent:** One tray icon, one background process. That’s it. 
+* ⚡ **Instant Access:** Launch any URL instantly in a clean, borderless window with a global hotkey.
+
+* 🗂️ **Unlimited Profiles:** Create and manage multiple profiles, each with its own URL, hotkey, and custom settings.
+
+* 💻 **Multi-Monitor Support:** Pin each profile to open on a specific monitor in your setup.
+
+* 🧠 **Performance:** Reduce CPU and network usage with background throttling.
+
+* 🪟 **Window Control:** Auto-mute when not active, plus persistent window sizing.
+
+* 🚀 **Lightweight:** Runs silently from the system tray and can be set to launch automatically with Windows.
 
 ## Quick Demo
 
@@ -87,8 +90,8 @@ Here’s how to get things rolling.
 Right-click the tray icon and hit `Settings` to manage your profiles.
 
 - Use `New Profile` to add one, or click an existing profile to edit.
-- Set a name, URL, and hotkey using the visual picker.
-- Don’t forget to `Save Changes` if you're done with it.
+- Set a name, URL, and hotkey. You can also configure advanced options for each profile, like the target monitor, auto-refresh on open, and background performance throttling.
+- Don’t forget to `Save Changes` when you're done.
 - To auto-launch with Windows, just toggle `Start with Windows` in the tray menu.
 
 ## Works On
