@@ -51,8 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleConfirmClick() {
+        if (state.mainKey === 'F5') {
+            showToast('F5 can\'t be set as a hotkey — it\'s used for page refresh', 'error');
+            return;
+        }
+
         if (!state.mainKey) {
-            alert('Error: You must select a main key (e.g., A, F1, Home) in addition to any modifiers.');
+            showToast('You need to select a hotkey', 'error');
             return;
         }
 
