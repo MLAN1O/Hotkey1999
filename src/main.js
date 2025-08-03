@@ -160,11 +160,15 @@ class MainApp {
         if (window.isVisible()) {
             window.hide();
         } else {
+            const profile = this.profiles.find(p => p.id === profileId);
             this.profileWindows.forEach((win, id) => {
                 if (id !== profileId && win.isVisible()) {
                     win.hide();
                 }
             });
+            if (profile && profile.enableRefreshOnOpen) {
+                this.reloadProfileWindow(profile.id);
+            }
             window.show();
             window.focus();
         }
@@ -211,7 +215,7 @@ class MainApp {
     createConfigWindow() {
         if (this.configWin) return this.configWin.focus();
         this.configWin = new BrowserWindow({
-            width: 1024, height: 768, title: 'HotkeyMyURL Manager',
+            width: 1200, height: 768, title: 'HotkeyMyURL Manager',
             autoHideMenuBar: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { 
@@ -285,7 +289,7 @@ class MainApp {
         const window = this.profileWindows.get(profileId);
         if (!window) return;
 
-        if (newProfile.kioskURL !== oldProfile.kioskURL || newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling) {
+        if (newProfile.kioskURL !== oldProfile.kioskURL || newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling || newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen) {
             this.destroyProfileWindow(profileId);
             this.createProfileWindow(newProfile);
         }
