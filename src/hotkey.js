@@ -2,13 +2,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const state = { modifiers: new Set(), mainKey: null };
     const keyboardWrapper = document.querySelector('.keyboard-wrapper');
 
-    // Function to apply theme to the body
+    // Function to apply theme to the html element
     function applyTheme(theme) {
-        document.body.classList.remove('theme-light', 'theme-dark');
+        document.documentElement.classList.remove('theme-light', 'theme-dark');
         if (theme === 'light') {
-            document.body.classList.add('theme-light');
+            document.documentElement.classList.add('theme-light');
         } else if (theme === 'dark') {
-            document.body.classList.add('theme-dark');
+            document.documentElement.classList.add('theme-dark');
         }
     }
 

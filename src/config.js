@@ -13,13 +13,13 @@ const enableBackgroundThrottlingInput = document.getElementById('enable-backgrou
 const enableRefreshOnOpenInput = document.getElementById('enable-refresh-on-open');
 const themeSelect = document.getElementById('theme-select');
 
-// Function to apply theme to the body
+// Function to apply theme to the html element
 function applyTheme(theme) {
-    document.body.classList.remove('theme-light', 'theme-dark');
+    document.documentElement.classList.remove('theme-light', 'theme-dark');
     if (theme === 'light') {
-        document.body.classList.add('theme-light');
+        document.documentElement.classList.add('theme-light');
     } else if (theme === 'dark') {
-        document.body.classList.add('theme-dark');
+        document.documentElement.classList.add('theme-dark');
     }
 }
 
@@ -85,11 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
-themeSelect.addEventListener('change', async (event) => {
-    const newTheme = event.target.value;
-    await window.api.setAppTheme(newTheme);
-    applyTheme(newTheme);
-});
+
 
 async function loadProfiles(profileIdToSelect = null) {
     profiles = await window.api.getProfiles();
@@ -222,6 +218,12 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         const idToSelect = selectedProfileId || (result.profile ? result.profile.id : null);
         await loadProfiles(idToSelect);
         showToast('Profile saved successfully!', 'success');
+
+        // Save and apply theme
+        const newTheme = themeSelect.value;
+        await window.api.setAppTheme(newTheme);
+        applyTheme(newTheme);
+
     } else {
         showToast(result.error, 'error');
     }
