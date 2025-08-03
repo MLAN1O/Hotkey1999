@@ -22,6 +22,9 @@ function registerIpcHandlers(configManager, mainApp) {
     // Handler to get all available displays.
     ipcMain.handle('get-available-displays', () => mainApp.getAvailableDisplays());
 
+    // Handler to get the primary monitor ID.
+    ipcMain.handle('get-primary-monitor-id', () => mainApp.getPrimaryMonitorId());
+
     // Handler to open the hotkey selection window.
     ipcMain.on('open-hotkey-window', (event, currentHotkey) => mainApp.createHotkeyWindow(currentHotkey));
 

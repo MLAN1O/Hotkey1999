@@ -2,6 +2,7 @@ let profiles = [];
 let selectedProfileId = null;
 let selectedHotkey = null;
 let availableDisplays = [];
+let primaryMonitorId = null;
 
 const profileList = document.getElementById('profile-list');
 const profileIdInput = document.getElementById('profile-id');
@@ -72,6 +73,7 @@ async function loadAvailableDisplays() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     await loadAvailableDisplays();
+    primaryMonitorId = await window.api.getPrimaryMonitorId();
     loadProfiles();
 
     // Load and apply initial theme
@@ -136,7 +138,8 @@ function selectProfile(profileId) {
         nameInput.value = profile.displayName;
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
-        monitorSelect.value = profile.monitorId || '';
+        // If monitorId is null, set to primaryMonitorId, otherwise use the profile's monitorId or empty string
+        monitorSelect.value = profile.monitorId === null ? primaryMonitorId : (profile.monitorId || '');
         enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
         enableRefreshOnOpenInput.checked = profile.enableRefreshOnOpen;
     }
@@ -149,8 +152,8 @@ function resetForm() {
     nameInput.value = 'New Profile';
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
-    monitorSelect.value = '';
-    enableBackgroundThrottlingInput.checked = true;
+    monitorSelect.value = primaryMonitorId || ''; // Set to primary monitor or empty if not found
+    enableBackgroundThrottlingInput.checked = false;
     enableRefreshOnOpenInput.checked = false;
     selectedProfileId = null;
 }
@@ -171,7 +174,8 @@ document.getElementById('add-profile-btn').addEventListener('click', async () =>
     const profileData = {
         kioskURL: newProfileUrl,
         displayName: newProfileName,
-        hotkey: null
+        hotkey: null,
+        monitorId: primaryMonitorId // Set default monitor to primary monitor
     };
 
     const result = await window.api.addProfile(profileData);
