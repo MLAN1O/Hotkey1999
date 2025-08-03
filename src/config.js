@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function updateSystemThemeOptionText(resolvedTheme) {
         const systemOption = themeSelect.querySelector('option[value="system"]');
         if (systemOption) {
-            systemOption.textContent = `System (${resolvedTheme === 'dark' ? 'Escuro' : 'Claro'})`;
+            systemOption.textContent = 'System';
         }
     }
 });
