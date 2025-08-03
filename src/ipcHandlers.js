@@ -1,9 +1,13 @@
 // ipcHandlers.js
-const { ipcMain, dialog } = require('electron');
+const { ipcMain, dialog, nativeTheme } = require('electron');
 
 function registerIpcHandlers(configManager, mainApp) {
     // Handler to get the current app theme.
-    ipcMain.handle('get-app-theme', (event) => configManager.getTheme());
+    ipcMain.handle('get-app-theme', (event) => {
+        const savedTheme = configManager.getTheme();
+        const resolvedTheme = savedTheme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : savedTheme;
+        return { savedTheme, resolvedTheme };
+    });
 
     // Handler to set the app theme.
     ipcMain.handle('set-app-theme', (event, theme) => {

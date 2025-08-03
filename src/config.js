@@ -75,14 +75,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadProfiles();
 
     // Load and apply initial theme
-    const initialTheme = await window.api.getAppTheme();
-    themeSelect.value = initialTheme;
-    applyTheme(initialTheme);
+    const { savedTheme, resolvedTheme } = await window.api.getAppTheme();
+    themeSelect.value = savedTheme;
+    applyTheme(resolvedTheme);
+    updateSystemThemeOptionText(resolvedTheme);
 
     // Listen for theme changes from main process
-    window.api.onUpdateTheme((theme) => {
-        applyTheme(theme);
+    window.api.onUpdateTheme((resolvedTheme) => {
+        applyTheme(resolvedTheme);
+        if (themeSelect.value === 'system') {
+            updateSystemThemeOptionText(resolvedTheme);
+        }
     });
+
+    function updateSystemThemeOptionText(resolvedTheme) {
+        const systemOption = themeSelect.querySelector('option[value="system"]');
+        if (systemOption) {
+            systemOption.textContent = `System (${resolvedTheme === 'dark' ? 'Escuro' : 'Claro'})`;
+        }
+    }
 });
 
 
@@ -219,10 +230,14 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         await loadProfiles(idToSelect);
         showToast('Profile saved successfully!', 'success');
 
-        // Save and apply theme
+        // Save theme
         const newTheme = themeSelect.value;
         await window.api.setAppTheme(newTheme);
-        applyTheme(newTheme);
+
+        // After saving, get the resolved theme and apply it immediately
+        const { resolvedTheme } = await window.api.getAppTheme();
+        applyTheme(resolvedTheme);
+        updateSystemThemeOptionText(resolvedTheme);
 
     } else {
         showToast(result.error, 'error');

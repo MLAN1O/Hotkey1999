@@ -12,10 +12,7 @@ class ConfigManager {
         this.profiles = this.loadProfiles();
         this.settings = this.loadAppSettings();
 
-        // Initialize theme
-        if (this.settings.theme === 'system') {
-            this.settings.theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-        }
+        
     }
 
     /**
