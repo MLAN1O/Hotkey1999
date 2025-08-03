@@ -145,7 +145,7 @@ function selectProfile(profileId) {
 
 function resetForm() {
     profileIdInput.value = '';
-    urlInput.value = 'https://example.com';
+    urlInput.value = 'https://www.example.com';
     nameInput.value = 'New Profile';
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
@@ -156,7 +156,7 @@ function resetForm() {
 }
 
 document.getElementById('add-profile-btn').addEventListener('click', async () => {
-    const newProfileUrl = 'https://example.com';
+    const newProfileUrl = 'https://www.example.com';
     const newProfileName = 'New Profile';
 
     if (!isValidUrl(newProfileUrl)) {

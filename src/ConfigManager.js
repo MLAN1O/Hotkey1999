@@ -100,11 +100,11 @@ class ConfigManager {
                 // Create a default profile if the file doesn't exist
                 const defaultProfile = {
                     id: crypto.randomUUID().substring(0, 8),
-                    kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
-                    hotkey: 'Home',
-                    displayName: 'Default Profile',
+                    kioskURL: 'https://www.example.com',
+                    hotkey: null,
+                    displayName: 'New Profile',
                     monitorId: null,
-                    enableBackgroundThrottling: true,
+                    enableBackgroundThrottling: false,
                     enableRefreshOnOpen: false
                 };
                 this.saveProfiles([defaultProfile]);
