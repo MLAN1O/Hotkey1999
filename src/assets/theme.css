@@ -24,4 +24,6 @@
     --border-color: #555555;
 }
 
-
+.toast {
+    font-weight: bold;
+}
