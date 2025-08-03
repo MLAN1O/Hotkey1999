@@ -1,5 +1,5 @@
 // ConfigManager.js
-const { app } = require('electron');
+const { app, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -11,6 +11,11 @@ class ConfigManager {
         this.settingsPath = path.join(this.userDataPath, 'settings.json');
         this.profiles = this.loadProfiles();
         this.settings = this.loadAppSettings();
+
+        // Initialize theme
+        if (this.settings.theme === 'system') {
+            this.settings.theme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+        }
     }
 
     /**
@@ -25,14 +30,15 @@ class ConfigManager {
                 return JSON.parse(data);
             } else {
                 const defaultSettings = {
-                    startWithWindows: false
+                    startWithWindows: false,
+                    theme: 'system' // light, dark, system
                 };
                 this.saveAppSettings(defaultSettings);
                 return defaultSettings;
             }
         } catch (error) {
             console.error('Error loading app settings:', error);
-            return { startWithWindows: false };
+            return { startWithWindows: false, theme: 'system' };
         }
     }
 
@@ -67,6 +73,23 @@ class ConfigManager {
     }
 
     /**
+     * Gets the current theme.
+     * @returns {string}
+     */
+    getTheme() {
+        return this.settings.theme;
+    }
+
+    /**
+     * Sets the theme.
+     * @param {string} theme The new theme ('light', 'dark', or 'system').
+     */
+    setTheme(theme) {
+        this.settings.theme = theme;
+        this.saveAppSettings(this.settings);
+    }
+
+    /**
      * Loads all profiles from the master configuration file (profiles.json).
      * If the file doesn't exist, it creates a default profile.
      * @returns {Array<object>} The array of profile objects.
@@ -78,7 +101,7 @@ class ConfigManager {
                 return JSON.parse(data);
             } else {
                 // Create a default profile if the file doesn't exist
-                                const defaultProfile = {
+                const defaultProfile = {
                     id: crypto.randomUUID().substring(0, 8),
                     kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
                     hotkey: 'Home',

@@ -2,6 +2,16 @@
 const { ipcMain, dialog } = require('electron');
 
 function registerIpcHandlers(configManager, mainApp) {
+    // Handler to get the current app theme.
+    ipcMain.handle('get-app-theme', (event) => configManager.getTheme());
+
+    // Handler to set the app theme.
+    ipcMain.handle('set-app-theme', (event, theme) => {
+        configManager.setTheme(theme);
+        // Optionally, notify all windows to update their theme
+        mainApp.updateAllWindowThemes(theme);
+    });
+
     // Handler to get all profiles.
     ipcMain.handle('get-profiles', () => configManager.getProfiles());
 

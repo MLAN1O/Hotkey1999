@@ -1,5 +1,5 @@
 // main.js
-const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog, screen } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog, screen, nativeTheme } = require('electron');
 const path = require('path');
 const ConfigManager = require('./ConfigManager');
 const { registerIpcHandlers } = require('./ipcHandlers');
@@ -360,7 +360,31 @@ class MainApp {
     sendHotkeyToConfigWindow = (hotkey) => this.configWin?.webContents.send('hotkey-updated', hotkey);
     closeHotkeyWindow = () => this.hotkeyWin?.close();
     closeConfigWindow = () => this.configWin?.close();
+
+    updateAllWindowThemes(theme) {
+        const currentTheme = theme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
+        if (this.configWin) {
+            this.configWin.webContents.send('update-theme', currentTheme);
+        }
+        if (this.hotkeyWin) {
+            this.hotkeyWin.webContents.send('update-theme', currentTheme);
+        }
+        // Update profile windows if they are visible
+        this.profileWindows.forEach(win => {
+            if (win.isVisible()) {
+                win.webContents.send('update-theme', currentTheme);
+            }
+        });
+    }
 }
 
 const mainApp = new MainApp();
 mainApp.init();
+
+// Listen for system theme changes
+nativeTheme.on('updated', () => {
+    const savedTheme = mainApp.configManager.getTheme();
+    if (savedTheme === 'system') {
+        mainApp.updateAllWindowThemes('system');
+    }
+});

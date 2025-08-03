@@ -1,0 +1,27 @@
+/* theme.css */
+
+:root {
+    --primary-bg-color: #ffffff;
+    --secondary-bg-color: #f0f0f0;
+    --text-color: #333333;
+    --primary-color: #007bff;
+    --border-color: #cccccc;
+}
+
+.theme-dark {
+    --primary-bg-color: #2c2c2c;
+    --secondary-bg-color: #3a3a3a;
+    --text-color: #f0f0f0;
+    --primary-color: #00aaff;
+    --border-color: #555555;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-bg-color: #2c2c2c;
+        --secondary-bg-color: #3a3a3a;
+        --text-color: #f0f0f0;
+        --primary-color: #00aaff;
+        --border-color: #555555;
+    }
+}

@@ -4,15 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Keyboard</title>
+    <link rel="stylesheet" href="./assets/theme.css">
     <style>
-        body { background-color: #e0e0e0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: Arial, sans-serif; margin: 0; user-select: none; }
-        .keyboard-wrapper { background-color: #d1d5db; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
-        .title { text-align: center; margin-bottom: 20px; font-size: 1.2em; color: #333; font-weight: bold; }
+        body {
+            background-color: var(--primary-bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            user-select: none;
+            transition: background-color 0.3s, color 0.3s;
+            color: var(--text-color);
+        }
+        .keyboard-wrapper { background-color: var(--secondary-bg-color); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+        .title { text-align: center; margin-bottom: 20px; font-size: 1.2em; color: var(--text-color); font-weight: bold; }
         .keyboard-container { display: flex; gap: 25px; }
-        .key { background-color: #f9fafb; color: #1f2937; border: 1px solid #9ca3af; border-bottom: 3px solid #9ca3af; border-radius: 5px; padding: 10px; min-width: 40px; width: 40px; height: 40px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 0.9em; cursor: pointer; transition: all 0.1s ease; }
-        .key:active { transform: translateY(2px); border-bottom-width: 1px; background-color: #e5e7eb; }
-        .key.selected { background-color: #3b82f6; color: white; border-color: #1d4ed8; }
-        .key.modifier.selected { background-color: #93c5fd; border-color: #3b82f6; color: #1e3a8a; }
+        .key { background-color: var(--primary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-bottom: 3px solid var(--border-color); border-radius: 5px; padding: 10px; min-width: 40px; width: 40px; height: 40px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 0.9em; cursor: pointer; transition: all 0.1s ease; }
+        .key:active { transform: translateY(2px); border-bottom-width: 1px; background-color: var(--secondary-bg-color); }
+        .key.selected { background-color: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .key.modifier.selected { background-color: #93c5fd; border-color: #3b82f6; color: #1e3a8a; /* These colors are hardcoded for better contrast on modifiers */ }
         .main-keyboard { display: flex; flex-direction: column; gap: 6px; }
         .keyboard-row { display: flex; gap: 6px; }
         .key.key-f { width: 45px; }
@@ -56,8 +68,8 @@
         }
 
         .toast {
-            background-color: #333;
-            color: white;
+            background-color: var(--text-color);
+            color: var(--primary-bg-color);
             padding: 10px 20px;
             border-radius: 5px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);

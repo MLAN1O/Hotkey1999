@@ -11,6 +11,17 @@ const monitorSelect = document.getElementById('monitor-select');
 const hotkeyDisplay = document.getElementById('hotkey-display');
 const enableBackgroundThrottlingInput = document.getElementById('enable-background-throttling');
 const enableRefreshOnOpenInput = document.getElementById('enable-refresh-on-open');
+const themeSelect = document.getElementById('theme-select');
+
+// Function to apply theme to the body
+function applyTheme(theme) {
+    document.body.classList.remove('theme-light', 'theme-dark');
+    if (theme === 'light') {
+        document.body.classList.add('theme-light');
+    } else if (theme === 'dark') {
+        document.body.classList.add('theme-dark');
+    }
+}
 
 // Function to show toast messages
 function showToast(message, type = 'success') {
@@ -62,6 +73,22 @@ async function loadAvailableDisplays() {
 document.addEventListener('DOMContentLoaded', async () => {
     await loadAvailableDisplays();
     loadProfiles();
+
+    // Load and apply initial theme
+    const initialTheme = await window.api.getAppTheme();
+    themeSelect.value = initialTheme;
+    applyTheme(initialTheme);
+
+    // Listen for theme changes from main process
+    window.api.onUpdateTheme((theme) => {
+        applyTheme(theme);
+    });
+});
+
+themeSelect.addEventListener('change', async (event) => {
+    const newTheme = event.target.value;
+    await window.api.setAppTheme(newTheme);
+    applyTheme(newTheme);
 });
 
 async function loadProfiles(profileIdToSelect = null) {

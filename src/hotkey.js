@@ -1,6 +1,16 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const state = { modifiers: new Set(), mainKey: null };
     const keyboardWrapper = document.querySelector('.keyboard-wrapper');
+
+    // Function to apply theme to the body
+    function applyTheme(theme) {
+        document.body.classList.remove('theme-light', 'theme-dark');
+        if (theme === 'light') {
+            document.body.classList.add('theme-light');
+        } else if (theme === 'dark') {
+            document.body.classList.add('theme-dark');
+        }
+    }
 
     // --- State Initialization ---
     const params = new URLSearchParams(window.location.search);
@@ -75,5 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.confirm-button').addEventListener('click', handleConfirmClick);
 
     updateSelection(); // Set initial state
+
+    // Load and apply initial theme
+    const initialTheme = await window.api.getAppTheme();
+    applyTheme(initialTheme);
+
+    // Listen for theme changes from main process
+    window.api.onUpdateTheme((theme) => {
+        applyTheme(theme);
+    });
 });
 

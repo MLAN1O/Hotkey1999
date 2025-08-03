@@ -9,4 +9,7 @@ contextBridge.exposeInMainWorld('api', {
     deleteProfile: (profileId) => ipcRenderer.invoke('delete-profile', profileId),
     openHotkeyWindow: (currentHotkey) => ipcRenderer.send('open-hotkey-window', currentHotkey),
     onHotkeyUpdate: (callback) => ipcRenderer.on('hotkey-updated', (event, value) => callback(value)),
+    getAppTheme: () => ipcRenderer.invoke('get-app-theme'),
+    setAppTheme: (theme) => ipcRenderer.invoke('set-app-theme', theme),
+    onUpdateTheme: (callback) => ipcRenderer.on('update-theme', (event, theme) => callback(theme)),
 });
