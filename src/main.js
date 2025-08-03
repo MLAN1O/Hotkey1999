@@ -140,6 +140,7 @@ class MainApp {
             webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
         });
 
+        newWindow.webContents.setAudioMuted(true);
         newWindow.loadURL(profile.kioskURL);
 
         newWindow.on('close', (e) => {
