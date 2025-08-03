@@ -1,5 +1,5 @@
 // main.js
-const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog } = require('electron');
+const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog, screen } = require('electron');
 const path = require('path');
 const ConfigManager = require('./ConfigManager');
 const { registerIpcHandlers } = require('./ipcHandlers');
@@ -107,20 +107,40 @@ class MainApp {
     }
 
     /**
+     * Returns a list of available displays.
+     * @returns {Array<Object>} A list of displays with their properties.
+     */
+    getAvailableDisplays() {
+        const displays = screen.getAllDisplays();
+        return displays.map(display => ({
+            id: display.id,
+            bounds: display.bounds,
+            label: `${display.label || 'Display'} (${display.size.width}x${display.size.height})`
+        }));
+    }
+
+    /**
      * Creates a BrowserWindow for a given profile.
      * @param {object} profile The profile to create a window for.
      */
     createProfileWindow(profile) {
+        const displays = this.getAvailableDisplays();
+        const selectedDisplay = displays.find(d => d.id === profile.monitorId);
+        const display = selectedDisplay || screen.getPrimaryDisplay();
+
         const newWindow = new BrowserWindow({
+            x: display.bounds.x,
+            y: display.bounds.y,
+            width: display.bounds.width,
+            height: display.bounds.height,
             show: false,
-            width: 1024, height: 768,
             autoHideMenuBar: true,
+            kiosk: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
         });
 
         newWindow.loadURL(profile.kioskURL);
-        newWindow.setFullScreen(true);
 
         newWindow.on('close', (e) => {
             if (!this.isQuitting) {
@@ -289,7 +309,10 @@ class MainApp {
         const window = this.profileWindows.get(profileId);
         if (!window) return;
 
-        if (newProfile.kioskURL !== oldProfile.kioskURL || newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling || newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen) {
+        if (newProfile.kioskURL !== oldProfile.kioskURL || 
+            newProfile.monitorId !== oldProfile.monitorId ||
+            newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling || 
+            newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen) {
             this.destroyProfileWindow(profileId);
             this.createProfileWindow(newProfile);
         }

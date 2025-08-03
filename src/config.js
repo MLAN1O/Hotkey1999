@@ -1,11 +1,13 @@
 let profiles = [];
 let selectedProfileId = null;
 let selectedHotkey = null;
+let availableDisplays = [];
 
 const profileList = document.getElementById('profile-list');
 const profileIdInput = document.getElementById('profile-id');
 const urlInput = document.getElementById('url');
 const nameInput = document.getElementById('name');
+const monitorSelect = document.getElementById('monitor-select');
 const hotkeyDisplay = document.getElementById('hotkey-display');
 const enableBackgroundThrottlingInput = document.getElementById('enable-background-throttling');
 const enableRefreshOnOpenInput = document.getElementById('enable-refresh-on-open');
@@ -46,7 +48,19 @@ function isValidDisplayName(name) {
     return name.trim().length > 0;
 }
 
+async function loadAvailableDisplays() {
+    availableDisplays = await window.api.getAvailableDisplays();
+    monitorSelect.innerHTML = '';
+    availableDisplays.forEach(display => {
+        const option = document.createElement('option');
+        option.value = display.id;
+        option.textContent = display.label;
+        monitorSelect.appendChild(option);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+    await loadAvailableDisplays();
     loadProfiles();
 });
 
@@ -88,6 +102,7 @@ function selectProfile(profileId) {
         nameInput.value = profile.displayName;
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
+        monitorSelect.value = profile.monitorId || '';
         enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
         enableRefreshOnOpenInput.checked = profile.enableRefreshOnOpen;
     }
@@ -100,6 +115,7 @@ function resetForm() {
     nameInput.value = 'New Profile';
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
+    monitorSelect.value = '';
     enableBackgroundThrottlingInput.checked = true;
     enableRefreshOnOpenInput.checked = false;
     selectedProfileId = null;
@@ -163,6 +179,7 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         kioskURL: kioskURL,
         displayName: displayName,
         hotkey: selectedHotkey,
+        monitorId: parseInt(monitorSelect.value) || null,
         enableBackgroundThrottling: enableBackgroundThrottlingInput.checked,
         enableRefreshOnOpen: enableRefreshOnOpenInput.checked
     };

@@ -83,6 +83,7 @@ class ConfigManager {
                     kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
                     hotkey: 'Home',
                     displayName: 'Default Profile',
+                    monitorId: null,
                     enableBackgroundThrottling: true,
                     enableRefreshOnOpen: false
                 };

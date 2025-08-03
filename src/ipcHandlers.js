@@ -5,6 +5,9 @@ function registerIpcHandlers(configManager, mainApp) {
     // Handler to get all profiles.
     ipcMain.handle('get-profiles', () => configManager.getProfiles());
 
+    // Handler to get all available displays.
+    ipcMain.handle('get-available-displays', () => mainApp.getAvailableDisplays());
+
     // Handler to open the hotkey selection window.
     ipcMain.on('open-hotkey-window', (event, currentHotkey) => mainApp.createHotkeyWindow(currentHotkey));
 
