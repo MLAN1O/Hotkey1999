@@ -78,11 +78,12 @@ class ConfigManager {
                 return JSON.parse(data);
             } else {
                 // Create a default profile if the file doesn't exist
-                const defaultProfile = {
+                                const defaultProfile = {
                     id: crypto.randomUUID().substring(0, 8),
                     kioskURL: 'https://en.wikipedia.org/wiki/Space_Invaders',
                     hotkey: 'Home',
-                    displayName: 'Default Profile'
+                    displayName: 'Default Profile',
+                    enableBackgroundThrottling: true
                 };
                 this.saveProfiles([defaultProfile]);
                 return [defaultProfile];

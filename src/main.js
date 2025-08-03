@@ -116,7 +116,7 @@ class MainApp {
             width: 1024, height: 768,
             autoHideMenuBar: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
-            webPreferences: { backgroundThrottling: false }
+            webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
         });
 
         newWindow.loadURL(profile.kioskURL);
@@ -285,8 +285,9 @@ class MainApp {
         const window = this.profileWindows.get(profileId);
         if (!window) return;
 
-        if (newProfile.kioskURL !== oldProfile.kioskURL) {
-            window.loadURL(newProfile.kioskURL);
+        if (newProfile.kioskURL !== oldProfile.kioskURL || newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling) {
+            this.destroyProfileWindow(profileId);
+            this.createProfileWindow(newProfile);
         }
     }
 

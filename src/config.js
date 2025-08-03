@@ -7,6 +7,7 @@ const profileIdInput = document.getElementById('profile-id');
 const urlInput = document.getElementById('url');
 const nameInput = document.getElementById('name');
 const hotkeyDisplay = document.getElementById('hotkey-display');
+const enableBackgroundThrottlingInput = document.getElementById('enable-background-throttling');
 
 // Function to show toast messages
 function showToast(message, type = 'success') {
@@ -86,6 +87,7 @@ function selectProfile(profileId) {
         nameInput.value = profile.displayName;
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
+        enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
     }
     renderProfileList();
 }
@@ -96,6 +98,7 @@ function resetForm() {
     nameInput.value = 'New Profile';
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
+    enableBackgroundThrottlingInput.checked = true;
     selectedProfileId = null;
 }
 
@@ -156,7 +159,8 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
     const profileData = {
         kioskURL: kioskURL,
         displayName: displayName,
-        hotkey: selectedHotkey
+        hotkey: selectedHotkey,
+        enableBackgroundThrottling: enableBackgroundThrottlingInput.checked
     };
 
     let result;
