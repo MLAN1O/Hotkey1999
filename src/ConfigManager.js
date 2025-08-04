@@ -105,7 +105,8 @@ class ConfigManager {
                     displayName: 'New Profile',
                     monitorId: null,
                     enableBackgroundThrottling: false,
-                    enableRefreshOnOpen: false
+                    enableRefreshOnOpen: false,
+                    muteAudioWhenBlurred: true
                 };
                 this.saveProfiles([defaultProfile]);
                 return [defaultProfile];

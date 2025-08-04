@@ -122,7 +122,8 @@
                     <input type="checkbox" id="enable-background-throttling" name="enable-background-throttling">
                     Background throttling (optional)
                 </label>
-                <div class="checkbox-description">Reduces CPU and network usage when the window is in the background. Disable for minimal delay when viewing video feeds, such as camera grids.</div>
+                <div class="checkbox-description">Reduces CPU and network usage when the window is in the background. Disable for minimal delay when viewing video feeds, such as camera grids. <br>
+                    OBS: This can also mute your background window. </div>
             </div>
             <div class="form-group">
                 <label for="enable-refresh-on-open">
@@ -130,6 +131,13 @@
                     Refresh on open (optional)
                 </label>
                 <div class="checkbox-description">Automatically refresh the page (F5) whenever the hotkey is used to open this profile.</div>
+            </div>
+            <div class="form-group">
+                <label for="mute-audio-when-blurred">
+                    <input type="checkbox" id="mute-audio-when-blurred" name="mute-audio-when-blurred">
+                    Mute audio when in background (optional)
+                </label>
+                <div class="checkbox-description">Mutes the audio of this profile's window when it's not in focus.</div>
             </div>
             <div class="form-actions">
                 <!-- Buttons moved to left sidebar -->

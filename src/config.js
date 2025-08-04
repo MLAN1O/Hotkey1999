@@ -12,6 +12,7 @@ const monitorSelect = document.getElementById('monitor-select');
 const hotkeyDisplay = document.getElementById('hotkey-display');
 const enableBackgroundThrottlingInput = document.getElementById('enable-background-throttling');
 const enableRefreshOnOpenInput = document.getElementById('enable-refresh-on-open');
+const muteAudioWhenBlurredInput = document.getElementById('mute-audio-when-blurred');
 const themeSelect = document.getElementById('theme-select');
 
 // Function to apply theme to the html element
@@ -142,6 +143,7 @@ function selectProfile(profileId) {
         monitorSelect.value = profile.monitorId === null ? primaryMonitorId : (profile.monitorId || '');
         enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
         enableRefreshOnOpenInput.checked = profile.enableRefreshOnOpen;
+        muteAudioWhenBlurredInput.checked = profile.muteAudioWhenBlurred;
     }
     renderProfileList();
 }
@@ -155,6 +157,7 @@ function resetForm() {
     monitorSelect.value = primaryMonitorId || ''; // Set to primary monitor or empty if not found
     enableBackgroundThrottlingInput.checked = false;
     enableRefreshOnOpenInput.checked = false;
+    muteAudioWhenBlurredInput.checked = true;
     selectedProfileId = null;
 }
 
@@ -219,7 +222,8 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         hotkey: selectedHotkey,
         monitorId: parseInt(monitorSelect.value) || null,
         enableBackgroundThrottling: enableBackgroundThrottlingInput.checked,
-        enableRefreshOnOpen: enableRefreshOnOpenInput.checked
+        enableRefreshOnOpen: enableRefreshOnOpenInput.checked,
+        muteAudioWhenBlurred: muteAudioWhenBlurredInput.checked
     };
 
     let result;
@@ -245,7 +249,8 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
             currentProfile.hotkey !== selectedHotkey ||
             currentProfile.monitorId !== (parseInt(monitorSelect.value) || null) ||
             currentProfile.enableBackgroundThrottling !== enableBackgroundThrottlingInput.checked ||
-            currentProfile.enableRefreshOnOpen !== enableRefreshOnOpenInput.checked
+            currentProfile.enableRefreshOnOpen !== enableRefreshOnOpenInput.checked ||
+            currentProfile.muteAudioWhenBlurred !== muteAudioWhenBlurredInput.checked
         );
 
         if (!profileDataChanged && oldTheme.savedTheme !== newTheme) {

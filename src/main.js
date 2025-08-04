@@ -124,12 +124,15 @@ class MainApp {
             height: display.bounds.height,
             show: false,
             autoHideMenuBar: true,
-            kiosk: true,
+            fullscreen: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
         });
 
-        newWindow.webContents.setAudioMuted(true);
+        if (profile.muteAudioWhenBlurred) {
+            newWindow.webContents.setAudioMuted(true);
+        }
+
         newWindow.loadURL(profile.kioskURL);
 
         newWindow.on('close', (e) => {
@@ -139,8 +142,16 @@ class MainApp {
             }
         });
 
-        newWindow.on('blur', () => newWindow.webContents.setAudioMuted(true));
-        newWindow.on('focus', () => newWindow.webContents.setAudioMuted(false));
+        newWindow.on('blur', () => {
+            if (profile.muteAudioWhenBlurred) {
+                newWindow.webContents.setAudioMuted(true);
+            }
+        });
+        newWindow.on('focus', () => {
+            if (profile.muteAudioWhenBlurred) {
+                newWindow.webContents.setAudioMuted(false);
+            }
+        });
 
         newWindow.webContents.on('before-input-event', (event, input) => {
             if (input.key === 'F5' && input.type === 'keyDown') {
@@ -309,7 +320,8 @@ class MainApp {
         if (newProfile.kioskURL !== oldProfile.kioskURL || 
             newProfile.monitorId !== oldProfile.monitorId ||
             newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling || 
-            newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen) {
+            newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
+            newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred) {
             this.destroyProfileWindow(profileId);
             this.createProfileWindow(newProfile);
         }
