@@ -232,10 +232,29 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
     if (result.success) {
         const idToSelect = selectedProfileId || (result.profile ? result.profile.id : null);
         await loadProfiles(idToSelect);
-        showToast('Profile saved successfully!', 'success');
+
+        // Check if only theme was changed
+        const oldTheme = await window.api.getAppTheme();
+        const newTheme = themeSelect.value;
+
+        // Determine if any profile data other than theme has changed
+        const currentProfile = profiles.find(p => p.id === selectedProfileId);
+        const profileDataChanged = currentProfile && (
+            currentProfile.kioskURL !== kioskURL ||
+            currentProfile.displayName !== displayName ||
+            currentProfile.hotkey !== selectedHotkey ||
+            currentProfile.monitorId !== (parseInt(monitorSelect.value) || null) ||
+            currentProfile.enableBackgroundThrottling !== enableBackgroundThrottlingInput.checked ||
+            currentProfile.enableRefreshOnOpen !== enableRefreshOnOpenInput.checked
+        );
+
+        if (!profileDataChanged && oldTheme.savedTheme !== newTheme) {
+            showToast('Theme has been updated!', 'success');
+        } else {
+            showToast('Profile saved successfully!', 'success');
+        }
 
         // Save theme
-        const newTheme = themeSelect.value;
         await window.api.setAppTheme(newTheme);
 
         // After saving, get the resolved theme and apply it immediately
