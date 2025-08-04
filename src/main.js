@@ -370,12 +370,6 @@ class MainApp {
         if (this.hotkeyWin) {
             this.hotkeyWin.webContents.send('update-theme', currentTheme);
         }
-        // Update profile windows if they are visible
-        this.profileWindows.forEach(win => {
-            if (win.isVisible()) {
-                win.webContents.send('update-theme', currentTheme);
-            }
-        });
     }
 }
 
