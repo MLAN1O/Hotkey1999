@@ -126,6 +126,7 @@ class MainApp {
             autoHideMenuBar: true,
             fullscreen: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
+            skipTaskbar: profile.hideFromTaskbar,
             webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
         });
 
@@ -323,7 +324,8 @@ class MainApp {
                                 newProfile.monitorId !== oldProfile.monitorId ||
                                 newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling ||
                                 newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
-                                newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred;
+                                newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred ||
+                                newProfile.hideFromTaskbar !== oldProfile.hideFromTaskbar;
 
         if (needsRecreation) {
             const wasVisible = window.isVisible(); // Check visibility before destroying

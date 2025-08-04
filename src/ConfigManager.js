@@ -106,7 +106,8 @@ class ConfigManager {
                     monitorId: null,
                     enableBackgroundThrottling: false,
                     enableRefreshOnOpen: false,
-                    muteAudioWhenBlurred: true
+                    muteAudioWhenBlurred: true,
+                    hideFromTaskbar: false
                 };
                 this.saveProfiles([defaultProfile]);
                 return [defaultProfile];

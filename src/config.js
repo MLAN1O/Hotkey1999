@@ -13,6 +13,7 @@ const hotkeyDisplay = document.getElementById('hotkey-display');
 const enableBackgroundThrottlingInput = document.getElementById('enable-background-throttling');
 const enableRefreshOnOpenInput = document.getElementById('enable-refresh-on-open');
 const muteAudioWhenBlurredInput = document.getElementById('mute-audio-when-blurred');
+const hideFromTaskbarInput = document.getElementById('hide-from-taskbar');
 const themeSelect = document.getElementById('theme-select');
 
 // Function to apply theme to the html element
@@ -144,6 +145,7 @@ function selectProfile(profileId) {
         enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
         enableRefreshOnOpenInput.checked = profile.enableRefreshOnOpen;
         muteAudioWhenBlurredInput.checked = profile.muteAudioWhenBlurred;
+        hideFromTaskbarInput.checked = profile.hideFromTaskbar;
     }
     renderProfileList();
 }
@@ -158,6 +160,7 @@ function resetForm() {
     enableBackgroundThrottlingInput.checked = false;
     enableRefreshOnOpenInput.checked = false;
     muteAudioWhenBlurredInput.checked = true;
+    hideFromTaskbarInput.checked = false;
     selectedProfileId = null;
 }
 
@@ -223,7 +226,8 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         monitorId: parseInt(monitorSelect.value) || null,
         enableBackgroundThrottling: enableBackgroundThrottlingInput.checked,
         enableRefreshOnOpen: enableRefreshOnOpenInput.checked,
-        muteAudioWhenBlurred: muteAudioWhenBlurredInput.checked
+        muteAudioWhenBlurred: muteAudioWhenBlurredInput.checked,
+        hideFromTaskbar: hideFromTaskbarInput.checked
     };
 
     let result;
@@ -250,7 +254,8 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
             currentProfile.monitorId !== (parseInt(monitorSelect.value) || null) ||
             currentProfile.enableBackgroundThrottling !== enableBackgroundThrottlingInput.checked ||
             currentProfile.enableRefreshOnOpen !== enableRefreshOnOpenInput.checked ||
-            currentProfile.muteAudioWhenBlurred !== muteAudioWhenBlurredInput.checked
+            currentProfile.muteAudioWhenBlurred !== muteAudioWhenBlurredInput.checked ||
+            currentProfile.hideFromTaskbar !== hideFromTaskbarInput.checked
         );
 
         if (!profileDataChanged && oldTheme.savedTheme !== newTheme) {
