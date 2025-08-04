@@ -64,17 +64,6 @@ class MainApp {
      * Registers the F5 hotkey to reload the current page.
      */
     registerF5Hotkey() {
-        try {
-            globalShortcut.register('F5', () => {
-                const visibleWindow = [...this.profileWindows.values()].find(win => win.isVisible());
-                if (visibleWindow) {
-                    const profileId = [...this.profileWindows.entries()].find(([id, win]) => win === visibleWindow)[0];
-                    this.reloadProfileWindow(profileId);
-                }
-            });
-        } catch (e) {
-            dialog.showErrorBox('Hotkey Error', 'Failed to register F5 hotkey.');
-        }
     }
 
     /**
@@ -152,6 +141,13 @@ class MainApp {
 
         newWindow.on('blur', () => newWindow.webContents.setAudioMuted(true));
         newWindow.on('focus', () => newWindow.webContents.setAudioMuted(false));
+
+        newWindow.webContents.on('before-input-event', (event, input) => {
+            if (input.key === 'F5' && input.type === 'keyDown') {
+                event.preventDefault();
+                this.reloadProfileWindow(profile.id);
+            }
+        });
 
         this.profileWindows.set(profile.id, newWindow);
     }
