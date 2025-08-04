@@ -143,14 +143,15 @@ class MainApp {
         });
 
         newWindow.on('blur', () => {
-            if (profile.muteAudioWhenBlurred) {
+            const currentProfile = this.profiles.find(p => p.id === profile.id);
+            if (currentProfile && currentProfile.muteAudioWhenBlurred) {
                 newWindow.webContents.setAudioMuted(true);
             }
         });
         newWindow.on('focus', () => {
-            if (profile.muteAudioWhenBlurred) {
-                newWindow.webContents.setAudioMuted(false);
-            }
+            // Always unmute on focus. If the setting was turned off while blurred, 
+            // the window would otherwise remain muted.
+            newWindow.webContents.setAudioMuted(false);
         });
 
         newWindow.webContents.on('before-input-event', (event, input) => {
@@ -317,13 +318,24 @@ class MainApp {
         const window = this.profileWindows.get(profileId);
         if (!window) return;
 
-        if (newProfile.kioskURL !== oldProfile.kioskURL || 
-            newProfile.monitorId !== oldProfile.monitorId ||
-            newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling || 
-            newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
-            newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred) {
+        // Check if a full window recreation is needed
+        const needsRecreation = newProfile.kioskURL !== oldProfile.kioskURL ||
+                                newProfile.monitorId !== oldProfile.monitorId ||
+                                newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling ||
+                                newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
+                                newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred;
+
+        if (needsRecreation) {
+            const wasVisible = window.isVisible(); // Check visibility before destroying
             this.destroyProfileWindow(profileId);
-            this.createProfileWindow(newProfile);
+            this.createProfileWindow(newProfile); // Creates the window but doesn't show it
+
+            if (wasVisible) {
+                const newWindow = this.profileWindows.get(profileId);
+                if (newWindow) {
+                    newWindow.show(); // Show it only if the old one was visible
+                }
+            }
         }
     }
 
