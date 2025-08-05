@@ -294,33 +294,6 @@ class MainApp {
     }
 
     /**
-     * Obtém informações sobre janelas ativas por monitor.
-     * @returns {object} Mapeamento de monitores e janelas ativas.
-     */
-    getActiveWindowsInfo() {
-        const info = {};
-        for (const [monitorId, window] of this.monitorWindows) {
-            if (!window.isDestroyed()) {
-                // Encontra o profileId associado
-                let profileId = null;
-                for (const [pId, win] of this.profileWindows) {
-                    if (win === window) {
-                        profileId = pId;
-                        break;
-                    }
-                }
-                
-                info[monitorId] = {
-                    profileId: profileId,
-                    visible: window.isVisible(),
-                    bounds: window.getBounds()
-                };
-            }
-        }
-        return info;
-    }
-
-    /**
      * Creates a BrowserWindow for a given profile.
      * @param {object} profile The profile to create a window for.
      */
