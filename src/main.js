@@ -3,6 +3,7 @@ const { app, BrowserWindow, globalShortcut, Menu, Tray, dialog, screen, nativeTh
 const path = require('path');
 const ConfigManager = require('./ConfigManager');
 const { registerIpcHandlers } = require('./ipcHandlers');
+const logger = require('./Logger');
 
 /**
  * Main application class for HotkeyMyURL.
@@ -19,6 +20,33 @@ class MainApp {
         this.tray = null;
         this.isQuitting = false;
         this.debugMode = true; // Force debug mode for this session
+        
+        // Set up error handling
+        this.setupErrorHandling();
+    }
+
+    /**
+     * Set up global error handling and logging.
+     */
+    setupErrorHandling() {
+        // Handle uncaught exceptions
+        process.on('uncaughtException', (error) => {
+            logger.createCrashReport(error, {
+                type: 'uncaughtException',
+                location: 'main_process'
+            });
+        });
+
+        // Handle unhandled promise rejections
+        process.on('unhandledRejection', (reason, promise) => {
+            logger.createCrashReport(reason, {
+                type: 'unhandledRejection',
+                location: 'main_process',
+                promise: promise
+            });
+        });
+
+        logger.info('Error handling setup completed');
     }
 
     /**
@@ -183,10 +211,20 @@ class MainApp {
         const displays = screen.getAllDisplays();
         const primaryDisplay = screen.getPrimaryDisplay();
         
+        this.debugLog(`validateMonitorPosition: Validating monitorId=${monitorId}`);
+        this.debugLog(`Available displays: ${displays.map(d => `${d.id}(${d.label})`).join(', ')}`);
+        
+        // Handle undefined, null, or invalid monitorId
+        if (monitorId === undefined || monitorId === null || typeof monitorId !== 'number') {
+            this.debugLog(`Invalid monitorId (${monitorId}), using primary display ${primaryDisplay.id}`);
+            return primaryDisplay;
+        }
+        
         // First, try to find the exact monitor by ID
         let targetDisplay = displays.find(d => d.id === monitorId);
         
         if (targetDisplay) {
+            this.debugLog(`Monitor ${monitorId} found successfully`);
             // Monitor exists, but validate bounds if provided
             if (savedBounds) {
                 const displayBounds = targetDisplay.bounds;
@@ -196,17 +234,48 @@ class MainApp {
                                      savedBounds.x < displayBounds.x + displayBounds.width &&
                                      savedBounds.y < displayBounds.y + displayBounds.height;
                 
-                if (!isWithinBounds && this.debugMode) {
-                    console.warn(`Saved bounds for monitor ${monitorId} are outside current display area. Using display bounds.`);
+                if (!isWithinBounds) {
+                    this.debugLog(`Saved bounds for monitor ${monitorId} are outside current display area`);
                 }
             }
             return targetDisplay;
         }
         
-        // Monitor not found, log warning and fallback to primary
-        if (this.debugMode) {
-            console.warn(`Monitor ${monitorId} not found. Falling back to primary display.`);
+        // Intelligent fallback: try to find best match using geometric distance
+        if (savedBounds && savedBounds.x !== undefined && savedBounds.y !== undefined) {
+            this.debugLog(`Monitor ${monitorId} not found, attempting intelligent fallback using savedBounds`);
+            
+            const savedCenter = {
+                x: savedBounds.x + (savedBounds.width || 0) / 2,
+                y: savedBounds.y + (savedBounds.height || 0) / 2
+            };
+            
+            let bestDisplay = primaryDisplay;
+            let shortestDistance = Number.MAX_SAFE_INTEGER;
+            
+            displays.forEach(display => {
+                const displayCenter = {
+                    x: display.bounds.x + display.bounds.width / 2,
+                    y: display.bounds.y + display.bounds.height / 2
+                };
+                
+                const distance = Math.sqrt(
+                    Math.pow(displayCenter.x - savedCenter.x, 2) +
+                    Math.pow(displayCenter.y - savedCenter.y, 2)
+                );
+                
+                if (distance < shortestDistance) {
+                    shortestDistance = distance;
+                    bestDisplay = display;
+                }
+            });
+            
+            this.debugLog(`Intelligent fallback selected display ${bestDisplay.id} (distance: ${shortestDistance.toFixed(0)}px)`);
+            return bestDisplay;
         }
+        
+        // Ultimate fallback to primary display
+        this.debugLog(`Monitor ${monitorId} not found, using primary display ${primaryDisplay.id}`);
         return primaryDisplay;
     }
 
@@ -217,7 +286,7 @@ class MainApp {
      */
     debugLog(message, ...args) {
         if (this.debugMode) {
-            console.log(`[DEBUG] ${message}`, ...args);
+            logger.debug(message, ...args);
         }
     }
 
@@ -227,7 +296,25 @@ class MainApp {
      * @param {...any} args Additional arguments.
      */
     errorLog(message, ...args) {
-        console.error(`[ERROR] ${message}`, ...args);
+        logger.error(message, ...args);
+    }
+
+    /**
+     * Log info messages.
+     * @param {string} message Info message to log.
+     * @param {...any} args Additional arguments.
+     */
+    infoLog(message, ...args) {
+        logger.info(message, ...args);
+    }
+
+    /**
+     * Log warning messages.
+     * @param {string} message Warning message to log.
+     * @param {...any} args Additional arguments.
+     */
+    warnLog(message, ...args) {
+        logger.warn(message, ...args);
     }
 
     /**
@@ -407,10 +494,10 @@ class MainApp {
         
         // If window doesn't exist or was destroyed, recreate it
         if (!window || window.isDestroyed()) {
-            console.warn(`Window for profile '${profile.displayName}' not found. Recreating...`);
+            this.warnLog(`Window for profile '${profile.displayName}' not found. Recreating...`);
             window = this.createProfileWindow(profile);
             if (!window) {
-                console.error(`ERROR: Could not recreate window for profile '${profile.displayName}'`);
+                this.errorLog(`Could not recreate window for profile '${profile.displayName}'`);
                 return;
             }
         }
