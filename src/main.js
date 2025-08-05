@@ -651,7 +651,6 @@ class MainApp {
     getPrimaryMonitorId = () => screen.getPrimaryDisplay().id;
     sendHotkeyToConfigWindow = (hotkey) => this.configWin?.webContents.send('hotkey-updated', hotkey);
     closeHotkeyWindow = () => this.hotkeyWin?.close();
-    closeConfigWindow = () => this.configWin?.close();
     
 
     updateAllWindowThemes(theme) {
