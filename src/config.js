@@ -341,3 +341,4 @@ async function loadAppVersion() {
 
 // Load version when page loads
 document.addEventListener('DOMContentLoaded', loadAppVersion);
+

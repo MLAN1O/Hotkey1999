@@ -15,4 +15,7 @@ contextBridge.exposeInMainWorld('api', {
     getPrimaryMonitorId: () => ipcRenderer.invoke('get-primary-monitor-id'),
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     openExternal: (url) => ipcRenderer.invoke('open-external', url),
+    // APIs for multi-window functionality
+    getMultiWindowStatus: () => ipcRenderer.invoke('get-multi-window-status'),
+    forceWindowToMonitor: (profileId, monitorId) => ipcRenderer.invoke('force-window-to-monitor', profileId, monitorId),
 });

@@ -13,10 +13,13 @@ class MainApp {
         this.configManager = new ConfigManager();
         this.profiles = [];
         this.profileWindows = new Map(); // <profileId, BrowserWindow>
+        this.monitorWindows = new Map(); // <monitorId, BrowserWindow> - monitor exclusivity control
+        this.windowMonitorMapping = new Map(); // <BrowserWindow, monitorId> - reverse mapping
         this.configWin = null;
         this.hotkeyWin = null;
         this.tray = null;
         this.isQuitting = false;
+        this.debugMode = process.env.NODE_ENV === 'development' || process.argv.includes('--debug');
     }
 
     /**
@@ -74,10 +77,17 @@ class MainApp {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Re-validate all profiles against current displays
-        this.profiles = this.profiles.map(profile => {
+        this.profiles = this.profiles.filter(profile => {
+            // Remove profiles with invalid data
+            if (!profile || !profile.id || !profile.displayName) {
+                this.errorLog(`Invalid profile removed:`, profile);
+                return false;
+            }
+            return true;
+        }).map(profile => {
             const validatedDisplay = this.validateMonitorPosition(profile.monitorId);
             if (validatedDisplay.id !== profile.monitorId) {
-                console.log(`Updated profile '${profile.displayName}' monitor from ${profile.monitorId} to ${validatedDisplay.id}`);
+                this.debugLog(`Updating monitor for profile '${profile.displayName}' from ${profile.monitorId} to ${validatedDisplay.id}`);
                 // Update profile with validated monitor ID
                 const updatedProfile = { ...profile, monitorId: validatedDisplay.id };
                 this.configManager.updateProfile(profile.id, updatedProfile);
@@ -85,6 +95,8 @@ class MainApp {
             }
             return profile;
         });
+        
+        this.debugLog(`Validation completed: ${this.profiles.length} valid profiles loaded`);
     }
 
     /**
@@ -158,7 +170,7 @@ class MainApp {
                                      savedBounds.x < displayBounds.x + displayBounds.width &&
                                      savedBounds.y < displayBounds.y + displayBounds.height;
                 
-                if (!isWithinBounds) {
+                if (!isWithinBounds && this.debugMode) {
                     console.warn(`Saved bounds for monitor ${monitorId} are outside current display area. Using display bounds.`);
                 }
             }
@@ -166,8 +178,120 @@ class MainApp {
         }
         
         // Monitor not found, log warning and fallback to primary
-        console.warn(`Monitor ${monitorId} not found. Falling back to primary display.`);
+        if (this.debugMode) {
+            console.warn(`Monitor ${monitorId} not found. Falling back to primary display.`);
+        }
         return primaryDisplay;
+    }
+
+    /**
+     * Log debug messages only when in debug mode.
+     * @param {string} message Debug message to log.
+     * @param {...any} args Additional arguments.
+     */
+    debugLog(message, ...args) {
+        if (this.debugMode) {
+            console.log(`[DEBUG] ${message}`, ...args);
+        }
+    }
+
+    /**
+     * Log error messages (always shown).
+     * @param {string} message Error message to log.
+     * @param {...any} args Additional arguments.
+     */
+    errorLog(message, ...args) {
+        console.error(`[ERROR] ${message}`, ...args);
+    }
+
+    /**
+     * Manages window exclusivity per monitor.
+     * If a window already exists on the monitor, it is closed before opening the new one.
+     * @param {number} monitorId Monitor ID where the window will be opened.
+     * @param {BrowserWindow} newWindow New window to be associated with the monitor.
+     * @param {string} profileId Profile ID of the new window.
+     */
+    manageMonitorExclusivity(monitorId, newWindow, profileId) {
+        // Validate if the profile still exists before proceeding
+        const profile = this.profiles.find(p => p.id === profileId);
+        if (!profile) {
+            console.error(`ERROR: Profile ${profileId} not found. Cancelling window creation.`);
+            if (newWindow && !newWindow.isDestroyed()) {
+                newWindow.destroy();
+            }
+            return false;
+        }
+
+        // Check if a window already exists on this monitor
+        const existingWindow = this.monitorWindows.get(monitorId);
+        
+        if (existingWindow && !existingWindow.isDestroyed()) {
+            // Remove existing window mappings SILENTLY
+            this.windowMonitorMapping.delete(existingWindow);
+            
+            // Find and remove the profileId of the existing window
+            for (const [pId, window] of this.profileWindows) {
+                if (window === existingWindow) {
+                    this.profileWindows.delete(pId);
+                    break;
+                }
+            }
+            
+            // Close the existing window
+            existingWindow.destroy();
+        }
+        
+        // Associate the new window with the monitor
+        this.monitorWindows.set(monitorId, newWindow);
+        this.windowMonitorMapping.set(newWindow, monitorId);
+        this.profileWindows.set(profileId, newWindow);
+        
+        // Configure event to clean up mappings when window is closed
+        newWindow.on('closed', () => {
+            this.cleanupWindowMappings(newWindow, monitorId, profileId);
+        });
+        
+        return true;
+    }
+
+    /**
+     * Cleans up mappings when a window is closed.
+     * @param {BrowserWindow} window Window that was closed.
+     * @param {number} monitorId Monitor ID.
+     * @param {string} profileId Profile ID.
+     */
+    cleanupWindowMappings(window, monitorId, profileId) {
+        this.monitorWindows.delete(monitorId);
+        this.windowMonitorMapping.delete(window);
+        this.profileWindows.delete(profileId);
+        // Log removed to reduce pollution
+    }
+
+    /**
+     * Obtém informações sobre janelas ativas por monitor.
+     * @returns {object} Mapeamento de monitores e janelas ativas.
+     */
+    getActiveWindowsInfo() {
+        const info = {};
+        for (const [monitorId, window] of this.monitorWindows) {
+            if (!window.isDestroyed()) {
+                // Encontra o profileId associado
+                let profileId = null;
+                for (const [pId, win] of this.profileWindows) {
+                    if (win === window) {
+                        profileId = pId;
+                        break;
+                    }
+                }
+                
+                info[monitorId] = {
+                    profileId: profileId,
+                    visible: window.isVisible(),
+                    bounds: window.getBounds()
+                };
+            }
+        }
+        return info;
     }
 
     /**
@@ -175,29 +299,53 @@ class MainApp {
      * @param {object} profile The profile to create a window for.
      */
     createProfileWindow(profile) {
+        // Strict profile validation
+        if (!profile || !profile.id) {
+            console.error('ERROR: Invalid profile provided to createProfileWindow');
+            return null;
+        }
+
+        // Check if the profile still exists in the current list
+        const currentProfile = this.profiles.find(p => p.id === profile.id);
+        if (!currentProfile) {
+            console.error(`ERROR: Profile ${profile.id} no longer exists in the profile list`);
+            return null;
+        }
+
         // Validate monitor position and get proper display
         const display = this.validateMonitorPosition(profile.monitorId);
         
-        // Log monitor selection for debugging
-        console.log(`Creating window for profile '${profile.displayName}' on monitor ${display.id} (${display.bounds.width}x${display.bounds.height})`);
+        try {
+            const newWindow = new BrowserWindow({
+                x: display.bounds.x,
+                y: display.bounds.y,
+                width: display.bounds.width,
+                height: display.bounds.height,
+                show: false,
+                autoHideMenuBar: true,
+                fullscreen: true,
+                icon: path.join(__dirname, '..\build\icon.ico'),
+                skipTaskbar: profile.hideFromTaskbar,
+                webPreferences: { 
+                    backgroundThrottling: profile.enableBackgroundThrottling,
+                    contextIsolation: true,
+                    nodeIntegration: false,
+                    webSecurity: true
+                }
+            });
 
-        const newWindow = new BrowserWindow({
-            x: display.bounds.x,
-            y: display.bounds.y,
-            width: display.bounds.width,
-            height: display.bounds.height,
-            show: false,
-            autoHideMenuBar: true,
-            fullscreen: true,
-            icon: path.join(__dirname, '..\build\icon.ico'),
-            skipTaskbar: profile.hideFromTaskbar,
-            webPreferences: { 
-                backgroundThrottling: profile.enableBackgroundThrottling,
-                contextIsolation: true,
-                nodeIntegration: false,
-                webSecurity: true
+            // Manage monitor exclusivity
+            const success = this.manageMonitorExclusivity(display.id, newWindow, profile.id);
+            if (!success) {
+                return null;
             }
-        });
+
+            return newWindow;
+            
+        } catch (error) {
+            console.error(`ERROR creating window for profile ${profile.id}:`, error);
+            return null;
+        }
 
         if (profile.muteAudioWhenBlurred) {
             newWindow.webContents.setAudioMuted(true);
@@ -231,7 +379,8 @@ class MainApp {
             }
         });
 
-        this.profileWindows.set(profile.id, newWindow);
+        // Window association already done in manageMonitorExclusivity
+        // this.profileWindows.set(profile.id, newWindow); // Removed - done in manageMonitorExclusivity
     }
 
     /**
@@ -249,27 +398,75 @@ class MainApp {
     }
 
     /**
-     * Toggles the visibility of a profile's window.
+     * Toggles the visibility of a profile's window with multi-monitor support.
      * @param {string} profileId The ID of the profile to toggle.
      */
     toggleProfileWindow(profileId) {
-        const window = this.profileWindows.get(profileId);
-        if (!window) return;
+        // Strict validation before proceeding
+        const profile = this.profiles.find(p => p.id === profileId);
+        if (!profile) {
+            console.error(`ERROR: Profile ${profileId} not found. Recreating window...`);
+            this.recoverMissingProfile(profileId);
+            return;
+        }
+
+        let window = this.profileWindows.get(profileId);
+        
+        // If window doesn't exist or was destroyed, recreate it
+        if (!window || window.isDestroyed()) {
+            console.warn(`Window for profile ${profileId} not found. Recreating...`);
+            window = this.createProfileWindow(profile);
+            if (!window) {
+                console.error(`ERROR: Could not recreate window for profile ${profileId}`);
+                return;
+            }
+        }
 
         if (window.isVisible()) {
             window.hide();
         } else {
-            const profile = this.profiles.find(p => p.id === profileId);
-            this.profileWindows.forEach((win, id) => {
-                if (id !== profileId && win.isVisible()) {
-                    win.hide();
+            // Get the monitor associated with this window
+            const monitorId = this.windowMonitorMapping.get(window);
+            
+            // Hide other windows only on the same monitor
+            for (const [otherId, otherWindow] of this.profileWindows) {
+                if (otherId !== profileId && 
+                    otherWindow && !otherWindow.isDestroyed() &&
+                    otherWindow.isVisible() && 
+                    this.windowMonitorMapping.get(otherWindow) === monitorId) {
+                    otherWindow.hide();
                 }
-            });
-            if (profile && profile.enableRefreshOnOpen) {
+            }
+            
+            // Refresh if configured
+            if (profile.enableRefreshOnOpen) {
                 this.reloadProfileWindow(profile.id);
             }
+            
             window.show();
             window.focus();
+        }
+    }
+
+    /**
+     * Attempts to recover a lost profile by recreating its window.
+     * @param {string} profileId ID of the lost profile.
+     */
+    recoverMissingProfile(profileId) {
+        // Reload profiles from ConfigManager
+        this.profiles = this.configManager.getProfiles();
+        
+        const profile = this.profiles.find(p => p.id === profileId);
+        if (profile) {
+            this.debugLog(`Recovering profile ${profileId}: ${profile.displayName}`);
+            const window = this.createProfileWindow(profile);
+            if (window) {
+                // Register hotkey again if necessary
+                this.registerProfileShortcut(profile);
+                this.debugLog(`Profile ${profileId} recovered successfully`);
+            }
+        } else {
+            this.errorLog(`Profile ${profileId} was not found even in saved data`);
         }
     }
 
@@ -385,8 +582,17 @@ class MainApp {
      * @param {object} newProfile The new profile data.
      */
     updateProfileWindow(profileId, oldProfile, newProfile) {
+        // Robust input data validation
+        if (!profileId || !oldProfile || !newProfile) {
+            this.errorLog('updateProfileWindow: Invalid data provided');
+            return;
+        }
+
         const window = this.profileWindows.get(profileId);
-        if (!window) return;
+        if (!window || window.isDestroyed()) {
+            this.debugLog(`updateProfileWindow: Window for profile ${profileId} not found or destroyed`);
+            return;
+        }
 
         // Validate new monitor position before comparison
         const validatedDisplay = this.validateMonitorPosition(newProfile.monitorId);
@@ -402,18 +608,15 @@ class MainApp {
 
         if (needsRecreation) {
             const wasVisible = window.isVisible(); // Check visibility before destroying
-            console.log(`Recreating window for profile '${validatedNewProfile.displayName}' due to settings change`);
+            this.debugLog(`Recreating window for profile '${validatedNewProfile.displayName}' due to settings change`);
             
             this.destroyProfileWindow(profileId);
-            this.createProfileWindow(validatedNewProfile); // Creates the window but doesn't show it
+            const newWindow = this.createProfileWindow(validatedNewProfile);
 
-            if (wasVisible) {
-                const newWindow = this.profileWindows.get(profileId);
-                if (newWindow) {
-                    console.log(`Restoring visibility for profile '${validatedNewProfile.displayName}'`);
-                    newWindow.show(); // Show it only if the old one was visible
-                    newWindow.focus();
-                }
+            if (wasVisible && newWindow) {
+                this.debugLog(`Restoring visibility for profile '${validatedNewProfile.displayName}'`);
+                newWindow.show();
+                newWindow.focus();
             }
         }
     }
@@ -443,14 +646,22 @@ class MainApp {
     }
 
     /**
-     * Destroys a profile's BrowserWindow.
+     * Destroys a profile's BrowserWindow and cleans up all mappings.
      * @param {string} profileId The ID of the profile whose window should be destroyed.
      */
     destroyProfileWindow(profileId) {
         const window = this.profileWindows.get(profileId);
-        if (window) {
-            window.destroy();
+        if (window && !window.isDestroyed()) {
+            const monitorId = this.windowMonitorMapping.get(window);
+            
+            // Remove todos os mapeamentos
             this.profileWindows.delete(profileId);
+            this.windowMonitorMapping.delete(window);
+            if (monitorId) {
+                this.monitorWindows.delete(monitorId);
+            }
+            
+            window.destroy();
         }
     }
 
@@ -460,6 +671,21 @@ class MainApp {
     sendHotkeyToConfigWindow = (hotkey) => this.configWin?.webContents.send('hotkey-updated', hotkey);
     closeHotkeyWindow = () => this.hotkeyWin?.close();
     closeConfigWindow = () => this.configWin?.close();
+    
+    /**
+     * Gets information about the current state of windows per monitor.
+     * Used for debugging and monitoring.
+     */
+    getMultiWindowStatus = () => {
+        const status = {
+            activeWindows: this.getActiveWindowsInfo(),
+            totalProfiles: this.profiles.length,
+            totalActiveWindows: this.monitorWindows.size,
+            monitors: this.getAvailableDisplays()
+        };
+        this.debugLog('Multi-monitor window status:', JSON.stringify(status, null, 2));
+        return status;
+    };
 
     updateAllWindowThemes(theme) {
         const currentTheme = theme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
