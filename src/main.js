@@ -19,7 +19,7 @@ class MainApp {
         this.hotkeyWin = null;
         this.tray = null;
         this.isQuitting = false;
-        this.debugMode = process.env.NODE_ENV === 'development' || process.argv.includes('--debug');
+        this.debugMode = true; // Force debug mode for this session
     }
 
     /**
@@ -67,6 +67,29 @@ class MainApp {
         
         this.registerF5Hotkey();
         registerIpcHandlers(this.configManager, this);
+
+        // Global audio management based on window focus state
+        // Global audio management based on window focus state
+        app.on('browser-window-focus', (event, window) => {
+            // Rule #2: Always unmute the focused window (if it's a profile window)
+            if (window && !window.isDestroyed() && window.profileId) {
+                window.webContents.setAudioMuted(false);
+            }
+        });
+
+                app.on('browser-window-blur', (event, window) => {
+            // Rule #3: For blurred windows, mute state depends on the profile setting
+            if (window && !window.isDestroyed() && window.profileId) {
+                // Directly get the latest profile data from the source of truth
+                const latestProfile = this.configManager.getProfileById(window.profileId);
+                
+                if (latestProfile) {
+                    window.webContents.setAudioMuted(latestProfile.muteAudioWhenBlurred);
+                } else {
+                    // Should not happen, but good to have a fallback
+                }
+            }
+        });
     }
 
     /**
@@ -340,29 +363,21 @@ class MainApp {
                 return null;
             }
 
-            if (profile.muteAudioWhenBlurred) {
-                newWindow.webContents.setAudioMuted(true);
-            }
+            // Attach profileId directly to the window for easier access in global handlers
+            newWindow.profileId = profile.id; 
 
             newWindow.loadURL(profile.kioskURL);
+
+            // Rule #1: Always mute the window when it is hidden
+            newWindow.on('hide', () => {
+                newWindow.webContents.setAudioMuted(true);
+            });
 
             newWindow.on('close', (e) => {
                 if (!this.isQuitting) {
                     e.preventDefault();
                     newWindow.hide();
                 }
-            });
-
-            newWindow.on('blur', () => {
-                const currentProfile = this.profiles.find(p => p.id === profile.id);
-                if (currentProfile && currentProfile.muteAudioWhenBlurred) {
-                    newWindow.webContents.setAudioMuted(true);
-                }
-            });
-            newWindow.on('focus', () => {
-                // Always unmute on focus. If the setting was turned off while blurred, 
-                // the window would otherwise remain muted.
-                newWindow.webContents.setAudioMuted(false);
             });
 
             newWindow.webContents.on('before-input-event', (event, input) => {
@@ -411,10 +426,10 @@ class MainApp {
         
         // If window doesn't exist or was destroyed, recreate it
         if (!window || window.isDestroyed()) {
-            console.warn(`Window for profile ${profileId} not found. Recreating...`);
+            console.warn(`Window for profile '${profile.displayName}' not found. Recreating...`);
             window = this.createProfileWindow(profile);
             if (!window) {
-                console.error(`ERROR: Could not recreate window for profile ${profileId}`);
+                console.error(`ERROR: Could not recreate window for profile '${profile.displayName}'`);
                 return;
             }
         }
