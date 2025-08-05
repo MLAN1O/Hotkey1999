@@ -340,47 +340,44 @@ class MainApp {
                 return null;
             }
 
+            if (profile.muteAudioWhenBlurred) {
+                newWindow.webContents.setAudioMuted(true);
+            }
+
+            newWindow.loadURL(profile.kioskURL);
+
+            newWindow.on('close', (e) => {
+                if (!this.isQuitting) {
+                    e.preventDefault();
+                    newWindow.hide();
+                }
+            });
+
+            newWindow.on('blur', () => {
+                const currentProfile = this.profiles.find(p => p.id === profile.id);
+                if (currentProfile && currentProfile.muteAudioWhenBlurred) {
+                    newWindow.webContents.setAudioMuted(true);
+                }
+            });
+            newWindow.on('focus', () => {
+                // Always unmute on focus. If the setting was turned off while blurred, 
+                // the window would otherwise remain muted.
+                newWindow.webContents.setAudioMuted(false);
+            });
+
+            newWindow.webContents.on('before-input-event', (event, input) => {
+                if (input.key === 'F5' && input.type === 'keyDown') {
+                    event.preventDefault();
+                    this.reloadProfileWindow(profile.id);
+                }
+            });
+
             return newWindow;
             
         } catch (error) {
             console.error(`ERROR creating window for profile ${profile.id}:`, error);
             return null;
         }
-
-        if (profile.muteAudioWhenBlurred) {
-            newWindow.webContents.setAudioMuted(true);
-        }
-
-        newWindow.loadURL(profile.kioskURL);
-
-        newWindow.on('close', (e) => {
-            if (!this.isQuitting) {
-                e.preventDefault();
-                newWindow.hide();
-            }
-        });
-
-        newWindow.on('blur', () => {
-            const currentProfile = this.profiles.find(p => p.id === profile.id);
-            if (currentProfile && currentProfile.muteAudioWhenBlurred) {
-                newWindow.webContents.setAudioMuted(true);
-            }
-        });
-        newWindow.on('focus', () => {
-            // Always unmute on focus. If the setting was turned off while blurred, 
-            // the window would otherwise remain muted.
-            newWindow.webContents.setAudioMuted(false);
-        });
-
-        newWindow.webContents.on('before-input-event', (event, input) => {
-            if (input.key === 'F5' && input.type === 'keyDown') {
-                event.preventDefault();
-                this.reloadProfileWindow(profile.id);
-            }
-        });
-
-        // Window association already done in manageMonitorExclusivity
-        // this.profileWindows.set(profile.id, newWindow); // Removed - done in manageMonitorExclusivity
     }
 
     /**
