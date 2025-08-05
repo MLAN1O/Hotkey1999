@@ -13,4 +13,6 @@ contextBridge.exposeInMainWorld('api', {
     setAppTheme: (theme) => ipcRenderer.invoke('set-app-theme', theme),
     onUpdateTheme: (callback) => ipcRenderer.on('update-theme', (event, theme) => callback(theme)),
     getPrimaryMonitorId: () => ipcRenderer.invoke('get-primary-monitor-id'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+    openExternal: (url) => ipcRenderer.invoke('open-external', url),
 });

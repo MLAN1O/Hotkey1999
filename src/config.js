@@ -288,3 +288,23 @@ document.getElementById('delete-profile-btn').addEventListener('click', async ()
         showToast(result.error, 'error');
     }
 });
+
+// Check for updates functionality
+document.getElementById('check-updates-btn').addEventListener('click', () => {
+    const githubReleasesUrl = 'https://github.com/mlan1o/Hotkey1999/releases';
+    window.api.openExternal(githubReleasesUrl);
+});
+
+// Load version from package.json dynamically
+async function loadAppVersion() {
+    try {
+        const version = await window.api.getAppVersion();
+        document.getElementById('app-version').textContent = `v${version}`;
+    } catch (error) {
+        console.error('Failed to load app version:', error);
+        // Keep the hardcoded version as fallback
+    }
+}
+
+// Load version when page loads
+document.addEventListener('DOMContentLoaded', loadAppVersion);

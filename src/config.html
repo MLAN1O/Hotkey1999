@@ -13,6 +13,23 @@
             display: flex;
             gap: 20px;
             transition: background-color 0.3s, color 0.3s;
+            position: relative;
+        }
+        
+        .header-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .version-text {
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.7;
         }
         #profile-list-container { width: 250px; }
         #profile-list { list-style-type: none; padding: 0; margin: 0; background-color: var(--secondary-bg-color); border-radius: 5px; max-height: 600px; overflow-y: auto; }
@@ -30,6 +47,24 @@
         button.danger { background-color: #dc3545; }
         #hotkey-display { background-color: var(--secondary-bg-color); border: 1px solid var(--border-color); padding: 8px; border-radius: 5px; min-height: 18px; font-weight: bold; max-width: 500px; }
         .checkbox-description { font-size: 12px; color: var(--text-color); margin-top: 5px; font-weight: normal; }
+        
+        /* Version and Update Section - moved to header */
+        #check-updates-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin: 0;
+        }
+        
+        #check-updates-btn:hover {
+            opacity: 0.9;
+        }
+
         /* Toast Messages */
         #toast-container {
             position: fixed;
@@ -67,6 +102,12 @@
     </style>
 </head>
 <body>
+    <!-- Header with version and update button -->
+    <div class="header-bar">
+        <span class="version-text">Release <span id="app-version">1.0.5</span></span>
+        <button id="check-updates-btn">Check for updates</button>
+    </div>
+
     <div id="profile-list-container">
         <h2>Profiles</h2>
         <ul id="profile-list"></ul>

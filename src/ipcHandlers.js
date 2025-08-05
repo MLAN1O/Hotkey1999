@@ -1,5 +1,7 @@
 // ipcHandlers.js
-const { ipcMain, dialog, nativeTheme } = require('electron');
+const { ipcMain, dialog, nativeTheme, shell } = require('electron');
+const path = require('path');
+const fs = require('fs');
 
 function registerIpcHandlers(configManager, mainApp) {
     // Handler to get the current app theme.
@@ -89,6 +91,29 @@ function registerIpcHandlers(configManager, mainApp) {
             return { success: true };
         } else {
             return { success: false, error: 'Failed to delete the profile.' };
+        }
+    });
+
+    // Handler to get the app version from package.json
+    ipcMain.handle('get-app-version', () => {
+        try {
+            const packageJsonPath = path.join(__dirname, '..', 'package.json');
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+            return packageJson.version;
+        } catch (error) {
+            console.error('Failed to read package.json:', error);
+            return '1.0.5'; // Fallback version
+        }
+    });
+
+    // Handler to open external URL
+    ipcMain.handle('open-external', async (event, url) => {
+        try {
+            await shell.openExternal(url);
+            return { success: true };
+        } catch (error) {
+            console.error('Failed to open external URL:', error);
+            return { success: false, error: 'Failed to open URL' };
         }
     });
 }
