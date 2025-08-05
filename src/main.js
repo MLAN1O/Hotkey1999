@@ -557,19 +557,6 @@ class MainApp {
     }
 
     /**
-     * Updates the application after a profile has been changed.
-     * @param {string} profileId The ID of the profile that was updated.
-     */
-    updateAppWithNewConfig(profileId, oldProfile) {
-        const newProfile = this.configManager.getProfileById(profileId);
-
-        if (oldProfile && newProfile) {
-            this.updateProfileWindow(profileId, oldProfile, newProfile);
-            this.updateProfileShortcut(oldProfile, newProfile);
-        }
-    }
-
-    /**
      * Updates a profile's window with new settings.
      * @param {string} profileId The ID of the profile to update.
      * @param {object} oldProfile The old profile data.
