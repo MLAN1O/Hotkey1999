@@ -385,6 +385,11 @@ class MainApp {
                     event.preventDefault();
                     this.reloadProfileWindow(profile.id);
                 }
+                // Handle Ctrl+R
+                if (input.key === 'r' && input.control && input.type === 'keyDown') {
+                    event.preventDefault();
+                    newWindow.webContents.reload();
+                }
             });
 
             return newWindow;
@@ -414,8 +419,8 @@ class MainApp {
      * @param {string} profileId The ID of the profile to toggle.
      */
     toggleProfileWindow(profileId) {
-        // Strict validation before proceeding
-        const profile = this.profiles.find(p => p.id === profileId);
+        // Get fresh profile data from ConfigManager to ensure latest settings
+        const profile = this.configManager.getProfileById(profileId);
         if (!profile) {
             console.error(`ERROR: Profile ${profileId} not found. Recreating window...`);
             this.recoverMissingProfile(profileId);
@@ -450,13 +455,18 @@ class MainApp {
                 }
             }
             
-            // Refresh if configured
-            if (profile.enableRefreshOnOpen) {
-                this.reloadProfileWindow(profile.id);
-            }
-            
             window.show();
             window.focus();
+            
+            // Refresh if configured (using Ctrl+R equivalent after window is shown)
+            if (profile.enableRefreshOnOpen === true) {
+                // Wait for window to be fully shown and loaded before reloading
+                setTimeout(() => {
+                    if (window && !window.isDestroyed()) {
+                        window.webContents.reload();
+                    }
+                }, 200);
+            }
         }
     }
 
