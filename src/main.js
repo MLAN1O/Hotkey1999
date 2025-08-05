@@ -127,7 +127,12 @@ class MainApp {
             fullscreen: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             skipTaskbar: profile.hideFromTaskbar,
-            webPreferences: { backgroundThrottling: profile.enableBackgroundThrottling }
+            webPreferences: { 
+                backgroundThrottling: profile.enableBackgroundThrottling,
+                contextIsolation: true,
+                nodeIntegration: false,
+                webSecurity: true
+            }
         });
 
         if (profile.muteAudioWhenBlurred) {
