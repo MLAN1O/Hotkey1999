@@ -693,21 +693,6 @@ class MainApp {
     closeHotkeyWindow = () => this.hotkeyWin?.close();
     closeConfigWindow = () => this.configWin?.close();
     
-    /**
-     * Gets information about the current state of windows per monitor.
-     * Used for debugging and monitoring.
-     */
-    getMultiWindowStatus = () => {
-        const profiles = this.configManager.getProfiles();
-        const status = {
-            activeWindows: this.getActiveWindowsInfo(),
-            totalProfiles: profiles.length,
-            totalActiveWindows: this.monitorWindows.size,
-            monitors: this.getAvailableDisplays()
-        };
-        this.debugLog('Multi-monitor window status:', JSON.stringify(status, null, 2));
-        return status;
-    };
 
     updateAllWindowThemes(theme) {
         const currentTheme = theme === 'system' ? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light') : theme;
