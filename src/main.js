@@ -11,7 +11,6 @@ const { registerIpcHandlers } = require('./ipcHandlers');
 class MainApp {
     constructor() {
         this.configManager = new ConfigManager();
-        this.profiles = [];
         this.profileWindows = new Map(); // <profileId, BrowserWindow>
         this.monitorWindows = new Map(); // <monitorId, BrowserWindow> - monitor exclusivity control
         this.windowMonitorMapping = new Map(); // <BrowserWindow, monitorId> - reverse mapping
@@ -40,7 +39,6 @@ class MainApp {
                 }
             });
 
-            this.profiles = this.configManager.getProfiles();
             app.disableHardwareAcceleration();
             app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
@@ -60,7 +58,8 @@ class MainApp {
         this.createTray();
         
         // Create profile windows with proper validation
-        this.profiles.forEach(profile => {
+        const profiles = this.configManager.getProfiles();
+        profiles.forEach(profile => {
             this.createProfileWindow(profile);
             this.registerProfileShortcut(profile);
         });
@@ -100,7 +99,8 @@ class MainApp {
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Re-validate all profiles against current displays
-        this.profiles = this.profiles.filter(profile => {
+        let profiles = this.configManager.getProfiles();
+        profiles = profiles.filter(profile => {
             // Remove profiles with invalid data
             if (!profile || !profile.id || !profile.displayName) {
                 this.errorLog(`Invalid profile removed:`, profile);
@@ -119,7 +119,10 @@ class MainApp {
             return profile;
         });
         
-        this.debugLog(`Validation completed: ${this.profiles.length} valid profiles loaded`);
+        // Save the updated profiles back to ConfigManager if any changes were made
+        this.configManager.saveProfiles(profiles);
+        
+        this.debugLog(`Validation completed: ${profiles.length} valid profiles loaded`);
     }
 
     /**
@@ -134,7 +137,7 @@ class MainApp {
      */
     reloadProfileWindow(profileId) {
         const window = this.profileWindows.get(profileId);
-        const profile = this.profiles.find(p => p.id === profileId);
+        const profile = this.configManager.getProfileById(profileId);
         if (window && profile) {
             window.loadURL(profile.kioskURL);
         }
@@ -236,7 +239,7 @@ class MainApp {
      */
     manageMonitorExclusivity(monitorId, newWindow, profileId) {
         // Validate if the profile still exists before proceeding
-        const profile = this.profiles.find(p => p.id === profileId);
+        const profile = this.configManager.getProfileById(profileId);
         if (!profile) {
             console.error(`ERROR: Profile ${profileId} not found. Cancelling window creation.`);
             if (newWindow && !newWindow.isDestroyed()) {
@@ -329,7 +332,7 @@ class MainApp {
         }
 
         // Check if the profile still exists in the current list
-        const currentProfile = this.profiles.find(p => p.id === profile.id);
+        const currentProfile = this.configManager.getProfileById(profile.id);
         if (!currentProfile) {
             console.error(`ERROR: Profile ${profile.id} no longer exists in the profile list`);
             return null;
@@ -475,10 +478,8 @@ class MainApp {
      * @param {string} profileId ID of the lost profile.
      */
     recoverMissingProfile(profileId) {
-        // Reload profiles from ConfigManager
-        this.profiles = this.configManager.getProfiles();
-        
-        const profile = this.profiles.find(p => p.id === profileId);
+        // Get fresh profile data from ConfigManager
+        const profile = this.configManager.getProfileById(profileId);
         if (profile) {
             this.debugLog(`Recovering profile ${profileId}: ${profile.displayName}`);
             const window = this.createProfileWindow(profile);
@@ -586,10 +587,8 @@ class MainApp {
      * Updates the application after a profile has been changed.
      * @param {string} profileId The ID of the profile that was updated.
      */
-    updateAppWithNewConfig(profileId) {
-        const oldProfile = this.profiles.find(p => p.id === profileId);
-        this.profiles = this.configManager.getProfiles();
-        const newProfile = this.profiles.find(p => p.id === profileId);
+    updateAppWithNewConfig(profileId, oldProfile) {
+        const newProfile = this.configManager.getProfileById(profileId);
 
         if (oldProfile && newProfile) {
             this.updateProfileWindow(profileId, oldProfile, newProfile);
@@ -688,7 +687,7 @@ class MainApp {
     }
 
     // Methods called from ipcHandlers
-    getProfiles = () => this.profiles;
+    getProfiles = () => this.configManager.getProfiles();
     getPrimaryMonitorId = () => screen.getPrimaryDisplay().id;
     sendHotkeyToConfigWindow = (hotkey) => this.configWin?.webContents.send('hotkey-updated', hotkey);
     closeHotkeyWindow = () => this.hotkeyWin?.close();
@@ -699,9 +698,10 @@ class MainApp {
      * Used for debugging and monitoring.
      */
     getMultiWindowStatus = () => {
+        const profiles = this.configManager.getProfiles();
         const status = {
             activeWindows: this.getActiveWindowsInfo(),
-            totalProfiles: this.profiles.length,
+            totalProfiles: profiles.length,
             totalActiveWindows: this.monitorWindows.size,
             monitors: this.getAvailableDisplays()
         };
