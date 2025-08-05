@@ -125,42 +125,6 @@ function registerIpcHandlers(configManager, mainApp) {
             return { success: false, error: 'Failed to open URL' };
         }
     });
-
-    // Handler to get multi-monitor window status
-    ipcMain.handle('get-multi-window-status', () => {
-        return mainApp.getMultiWindowStatus();
-    });
-
-    // Handler to force a window to open on a specific monitor
-    ipcMain.handle('force-window-to-monitor', (event, profileId, monitorId) => {
-        try {
-            const profile = configManager.getProfileById(profileId);
-            if (!profile) {
-                return { success: false, error: 'Profile not found' };
-            }
-
-            // Update profile with new monitor
-            const updatedProfile = { ...profile, monitorId: monitorId };
-            const result = configManager.updateProfile(profileId, updatedProfile);
-            
-            if (result) {
-                // Recreate window on new monitor
-                mainApp.destroyProfileWindow(profileId);
-                mainApp.createProfileWindow(updatedProfile);
-                
-                return { 
-                    success: true, 
-                    message: `Window moved to monitor ${monitorId}`,
-                    profile: result 
-                };
-            } else {
-                return { success: false, error: 'Failed to update profile' };
-            }
-        } catch (error) {
-            console.error('Error moving window to monitor:', error);
-            return { success: false, error: error.message };
-        }
-    });
 }
 
 module.exports = { registerIpcHandlers };
