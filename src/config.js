@@ -140,14 +140,39 @@ function selectProfile(profileId) {
         nameInput.value = profile.displayName;
         selectedHotkey = profile.hotkey;
         hotkeyDisplay.textContent = selectedHotkey || 'Not set';
-        // If monitorId is null, set to primaryMonitorId, otherwise use the profile's monitorId or empty string
-        monitorSelect.value = profile.monitorId === null ? primaryMonitorId : (profile.monitorId || '');
-        enableBackgroundThrottlingInput.checked = profile.enableBackgroundThrottling;
-        enableRefreshOnOpenInput.checked = profile.enableRefreshOnOpen;
-        muteAudioWhenBlurredInput.checked = profile.muteAudioWhenBlurred;
-        hideFromTaskbarInput.checked = profile.hideFromTaskbar;
+        
+        // Fix monitor selection logic - validate monitor exists
+        const validMonitorId = validateMonitorSelection(profile.monitorId);
+        monitorSelect.value = validMonitorId;
+        
+        // Ensure each checkbox gets its own value - no copy-paste mistakes
+        enableBackgroundThrottlingInput.checked = Boolean(profile.enableBackgroundThrottling);
+        enableRefreshOnOpenInput.checked = Boolean(profile.enableRefreshOnOpen);
+        muteAudioWhenBlurredInput.checked = Boolean(profile.muteAudioWhenBlurred);
+        hideFromTaskbarInput.checked = Boolean(profile.hideFromTaskbar);
     }
     renderProfileList();
+}
+
+/**
+ * Validates and returns a valid monitor ID, falling back to primary if needed.
+ * @param {number|null} monitorId The monitor ID to validate.
+ * @returns {number} A valid monitor ID.
+ */
+function validateMonitorSelection(monitorId) {
+    // If no monitor ID specified, use primary
+    if (monitorId === null || monitorId === undefined) {
+        return primaryMonitorId || '';
+    }
+    
+    // Check if the monitor still exists in available displays
+    const monitorExists = availableDisplays.some(display => display.id === monitorId);
+    if (!monitorExists) {
+        console.warn(`Monitor ${monitorId} no longer exists. Falling back to primary monitor.`);
+        return primaryMonitorId || '';
+    }
+    
+    return monitorId;
 }
 
 function resetForm() {
@@ -157,10 +182,13 @@ function resetForm() {
     selectedHotkey = null;
     hotkeyDisplay.textContent = 'Not set';
     monitorSelect.value = primaryMonitorId || ''; // Set to primary monitor or empty if not found
+    
+    // Reset each checkbox individually to prevent copy-paste errors
     enableBackgroundThrottlingInput.checked = false;
     enableRefreshOnOpenInput.checked = false;
-    muteAudioWhenBlurredInput.checked = true;
+    muteAudioWhenBlurredInput.checked = true;  // Default: mute when blurred
     hideFromTaskbarInput.checked = false;
+    
     selectedProfileId = null;
 }
 
@@ -219,15 +247,20 @@ document.getElementById('config-form').addEventListener('submit', async (event) 
         return;
     }
 
+    // Validate monitor selection before saving
+    const selectedMonitorId = parseInt(monitorSelect.value) || null;
+    const validatedMonitorId = validateMonitorSelection(selectedMonitorId);
+    
     const profileData = {
         kioskURL: kioskURL,
         displayName: displayName,
         hotkey: selectedHotkey,
-        monitorId: parseInt(monitorSelect.value) || null,
-        enableBackgroundThrottling: enableBackgroundThrottlingInput.checked,
-        enableRefreshOnOpen: enableRefreshOnOpenInput.checked,
-        muteAudioWhenBlurred: muteAudioWhenBlurredInput.checked,
-        hideFromTaskbar: hideFromTaskbarInput.checked
+        monitorId: validatedMonitorId,
+        // Explicitly read each checkbox to prevent variable mix-ups
+        enableBackgroundThrottling: Boolean(enableBackgroundThrottlingInput.checked),
+        enableRefreshOnOpen: Boolean(enableRefreshOnOpenInput.checked),
+        muteAudioWhenBlurred: Boolean(muteAudioWhenBlurredInput.checked),
+        hideFromTaskbar: Boolean(hideFromTaskbarInput.checked)
     };
 
     let result;

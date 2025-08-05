@@ -46,7 +46,11 @@ function registerIpcHandlers(configManager, mainApp) {
             };
         }
 
-        const newProfile = configManager.addProfile(profileData);
+        // Validate monitor selection for new profiles
+        const validatedDisplay = mainApp.validateMonitorPosition(profileData.monitorId);
+        const validatedData = { ...profileData, monitorId: validatedDisplay.id };
+
+        const newProfile = configManager.addProfile(validatedData);
         if (newProfile) {
             mainApp.createProfileWindow(newProfile);
             mainApp.registerProfileShortcut(newProfile);
@@ -67,7 +71,12 @@ function registerIpcHandlers(configManager, mainApp) {
         }
 
         const oldProfile = { ...configManager.getProfileById(profileId) };
-        const updatedProfile = configManager.updateProfile(profileId, updatedData);
+        
+        // Validate monitor selection before updating
+        const validatedDisplay = mainApp.validateMonitorPosition(updatedData.monitorId);
+        const validatedData = { ...updatedData, monitorId: validatedDisplay.id };
+        
+        const updatedProfile = configManager.updateProfile(profileId, validatedData);
 
         if (updatedProfile) {
             mainApp.updateProfileWindow(profileId, oldProfile, updatedProfile);

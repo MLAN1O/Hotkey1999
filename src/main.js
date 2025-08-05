@@ -50,14 +50,41 @@ class MainApp {
     /**
      * Called when the app is ready. Creates the tray icon, profile windows, and registers handlers.
      */
-    onReady() {
+    async onReady() {
+        // Ensure all settings are loaded before creating windows
+        await this.ensureSettingsLoaded();
+        
         this.createTray();
+        
+        // Create profile windows with proper validation
         this.profiles.forEach(profile => {
             this.createProfileWindow(profile);
             this.registerProfileShortcut(profile);
         });
+        
         this.registerF5Hotkey();
         registerIpcHandlers(this.configManager, this);
+    }
+
+    /**
+     * Ensures all settings are properly loaded before window creation.
+     */
+    async ensureSettingsLoaded() {
+        // Small delay to ensure all async operations are complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Re-validate all profiles against current displays
+        this.profiles = this.profiles.map(profile => {
+            const validatedDisplay = this.validateMonitorPosition(profile.monitorId);
+            if (validatedDisplay.id !== profile.monitorId) {
+                console.log(`Updated profile '${profile.displayName}' monitor from ${profile.monitorId} to ${validatedDisplay.id}`);
+                // Update profile with validated monitor ID
+                const updatedProfile = { ...profile, monitorId: validatedDisplay.id };
+                this.configManager.updateProfile(profile.id, updatedProfile);
+                return updatedProfile;
+            }
+            return profile;
+        });
     }
 
     /**
@@ -109,13 +136,50 @@ class MainApp {
     }
 
     /**
+     * Validates if a monitor position is still valid and within current displays.
+     * @param {number} monitorId The monitor ID to validate.
+     * @param {object} savedBounds Optional saved bounds to validate.
+     * @returns {object} Validated display object or primary display fallback.
+     */
+    validateMonitorPosition(monitorId, savedBounds = null) {
+        const displays = screen.getAllDisplays();
+        const primaryDisplay = screen.getPrimaryDisplay();
+        
+        // First, try to find the exact monitor by ID
+        let targetDisplay = displays.find(d => d.id === monitorId);
+        
+        if (targetDisplay) {
+            // Monitor exists, but validate bounds if provided
+            if (savedBounds) {
+                const displayBounds = targetDisplay.bounds;
+                // Check if saved bounds are within the current display bounds
+                const isWithinBounds = savedBounds.x >= displayBounds.x && 
+                                     savedBounds.y >= displayBounds.y &&
+                                     savedBounds.x < displayBounds.x + displayBounds.width &&
+                                     savedBounds.y < displayBounds.y + displayBounds.height;
+                
+                if (!isWithinBounds) {
+                    console.warn(`Saved bounds for monitor ${monitorId} are outside current display area. Using display bounds.`);
+                }
+            }
+            return targetDisplay;
+        }
+        
+        // Monitor not found, log warning and fallback to primary
+        console.warn(`Monitor ${monitorId} not found. Falling back to primary display.`);
+        return primaryDisplay;
+    }
+
+    /**
      * Creates a BrowserWindow for a given profile.
      * @param {object} profile The profile to create a window for.
      */
     createProfileWindow(profile) {
-        const displays = this.getAvailableDisplays();
-        const selectedDisplay = displays.find(d => d.id === profile.monitorId);
-        const display = selectedDisplay || screen.getPrimaryDisplay();
+        // Validate monitor position and get proper display
+        const display = this.validateMonitorPosition(profile.monitorId);
+        
+        // Log monitor selection for debugging
+        console.log(`Creating window for profile '${profile.displayName}' on monitor ${display.id} (${display.bounds.width}x${display.bounds.height})`);
 
         const newWindow = new BrowserWindow({
             x: display.bounds.x,
@@ -324,23 +388,31 @@ class MainApp {
         const window = this.profileWindows.get(profileId);
         if (!window) return;
 
+        // Validate new monitor position before comparison
+        const validatedDisplay = this.validateMonitorPosition(newProfile.monitorId);
+        const validatedNewProfile = { ...newProfile, monitorId: validatedDisplay.id };
+
         // Check if a full window recreation is needed
-        const needsRecreation = newProfile.kioskURL !== oldProfile.kioskURL ||
-                                newProfile.monitorId !== oldProfile.monitorId ||
-                                newProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling ||
-                                newProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
-                                newProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred ||
-                                newProfile.hideFromTaskbar !== oldProfile.hideFromTaskbar;
+        const needsRecreation = validatedNewProfile.kioskURL !== oldProfile.kioskURL ||
+                                validatedNewProfile.monitorId !== oldProfile.monitorId ||
+                                validatedNewProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling ||
+                                validatedNewProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
+                                validatedNewProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred ||
+                                validatedNewProfile.hideFromTaskbar !== oldProfile.hideFromTaskbar;
 
         if (needsRecreation) {
             const wasVisible = window.isVisible(); // Check visibility before destroying
+            console.log(`Recreating window for profile '${validatedNewProfile.displayName}' due to settings change`);
+            
             this.destroyProfileWindow(profileId);
-            this.createProfileWindow(newProfile); // Creates the window but doesn't show it
+            this.createProfileWindow(validatedNewProfile); // Creates the window but doesn't show it
 
             if (wasVisible) {
                 const newWindow = this.profileWindows.get(profileId);
                 if (newWindow) {
+                    console.log(`Restoring visibility for profile '${validatedNewProfile.displayName}'`);
                     newWindow.show(); // Show it only if the old one was visible
+                    newWindow.focus();
                 }
             }
         }
