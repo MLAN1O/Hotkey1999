@@ -107,7 +107,8 @@ class ConfigManager {
                     enableBackgroundThrottling: false,
                     enableRefreshOnOpen: false,
                     muteAudioWhenBlurred: true,
-                    hideFromTaskbar: false
+                    hideFromTaskbar: false,
+                    alwaysActive: false
                 };
                 this.saveProfiles([defaultProfile]);
                 return [defaultProfile];
@@ -139,6 +140,7 @@ class ConfigManager {
     addProfile(profileData) {
         const newProfile = {
             id: crypto.randomUUID().substring(0, 8),
+            alwaysActive: false,
             ...profileData
         };
         const profiles = this.getProfiles();

@@ -339,19 +339,25 @@ class MainApp {
         const existingWindow = this.monitorWindows.get(monitorId);
         
         if (existingWindow && !existingWindow.isDestroyed()) {
-            // Remove existing window mappings SILENTLY
-            this.windowMonitorMapping.delete(existingWindow);
-            
-            // Find and remove the profileId of the existing window
-            for (const [pId, window] of this.profileWindows) {
-                if (window === existingWindow) {
-                    this.profileWindows.delete(pId);
-                    break;
+            const existingProfile = this.configManager.getProfileById(existingWindow.profileId);
+
+            if (existingProfile && existingProfile.alwaysActive) {
+                existingWindow.hide();
+            } else {
+                // Remove existing window mappings SILENTLY
+                this.windowMonitorMapping.delete(existingWindow);
+                
+                // Find and remove the profileId of the existing window
+                for (const [pId, window] of this.profileWindows) {
+                    if (window === existingWindow) {
+                        this.profileWindows.delete(pId);
+                        break;
+                    }
                 }
+                
+                // Close the existing window
+                existingWindow.destroy();
             }
-            
-            // Close the existing window
-            existingWindow.destroy();
         }
         
         // Associate the new window with the monitor
