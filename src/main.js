@@ -594,7 +594,7 @@ class MainApp {
     createConfigWindow() {
         if (this.configWin) return this.configWin.focus();
         this.configWin = new BrowserWindow({
-            width: 1200, height: 800, title: 'HotkeyMyURL Manager',
+            width: 1200, height: 836, title: 'HotkeyMyURL Manager',
             autoHideMenuBar: true,
             icon: path.join(__dirname, '..\build\icon.ico'),
             webPreferences: { 
