@@ -414,6 +414,8 @@ class MainApp {
                 }
             });
 
+            newWindow.webContents.setAudioMuted(true);
+
             // Manage monitor exclusivity
             const success = this.manageMonitorExclusivity(display.id, newWindow, profile.id);
             if (!success) {
