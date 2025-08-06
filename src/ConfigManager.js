@@ -34,7 +34,7 @@ class ConfigManager {
                 return defaultSettings;
             }
         } catch (error) {
-            console.error('Error loading app settings:', error);
+            logger.error('Error loading app settings:', error);
             return { startWithWindows: false, theme: 'system' };
         }
     }
@@ -48,7 +48,7 @@ class ConfigManager {
             fs.writeFileSync(this.settingsPath, JSON.stringify(settings, null, 2));
             this.settings = settings;
         } catch (error) {
-            console.error('Failed to save app settings:', error);
+            logger.error('Failed to save app settings:', error);
         }
     }
 
@@ -114,7 +114,7 @@ class ConfigManager {
                 return [defaultProfile];
             }
         } catch (error) {
-            console.error('Error loading profiles:', error);
+            logger.error('Error loading profiles:', error);
             return [];
         }
     }
@@ -128,7 +128,7 @@ class ConfigManager {
             fs.writeFileSync(this.profilesPath, JSON.stringify(profiles, null, 2));
             this.profiles = profiles; // Update the in-memory profiles
         } catch (error) {
-            console.error('Failed to save profiles:', error);
+            logger.error('Failed to save profiles:', error);
         }
     }
 

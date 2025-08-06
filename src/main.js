@@ -275,7 +275,7 @@ class MainApp {
         }
         
         // Ultimate fallback to primary display
-        this.debugLog(`Monitor ${monitorId} not found, using primary display ${primaryDisplay.id}`);
+        this.warnLog(`Monitor ${monitorId} not found, using primary display ${primaryDisplay.id}`);
         return primaryDisplay;
     }
 
@@ -328,7 +328,7 @@ class MainApp {
         // Validate if the profile still exists before proceeding
         const profile = this.configManager.getProfileById(profileId);
         if (!profile) {
-            console.error(`ERROR: Profile ${profileId} not found. Cancelling window creation.`);
+            logger.error(`ERROR: Profile ${profileId} not found. Cancelling window creation.`);
             if (newWindow && !newWindow.isDestroyed()) {
                 newWindow.destroy();
             }
@@ -340,6 +340,7 @@ class MainApp {
         
         if (existingWindow && !existingWindow.isDestroyed()) {
             const existingProfile = this.configManager.getProfileById(existingWindow.profileId);
+            this.infoLog(`Closing existing window on monitor ${monitorId} for profile: ${existingProfile ? existingProfile.displayName : 'Unknown'}`);
 
             if (existingProfile && existingProfile.alwaysActive) {
                 existingWindow.hide();
@@ -381,14 +382,14 @@ class MainApp {
     createProfileWindow(profile) {
         // Strict profile validation
         if (!profile || !profile.id) {
-            console.error('ERROR: Invalid profile provided to createProfileWindow');
+            logger.error('ERROR: Invalid profile provided to createProfileWindow');
             return null;
         }
 
         // Check if the profile still exists in the current list
         const currentProfile = this.configManager.getProfileById(profile.id);
         if (!currentProfile) {
-            console.error(`ERROR: Profile ${profile.id} no longer exists in the profile list`);
+            logger.error(`ERROR: Profile ${profile.id} no longer exists in the profile list`);
             return null;
         }
 
@@ -425,6 +426,8 @@ class MainApp {
             // Attach profileId directly to the window for easier access in global handlers
             newWindow.profileId = profile.id; 
 
+            this.infoLog(`Profile window created for '${profile.displayName}' (ID: ${profile.id}) on monitor ${display.id}`);
+
             newWindow.loadURL(profile.kioskURL);
 
             // Rule #1: Always mute the window when it is hidden
@@ -454,7 +457,7 @@ class MainApp {
             return newWindow;
             
         } catch (error) {
-            console.error(`ERROR creating window for profile ${profile.id}:`, error);
+            logger.error(`ERROR creating window for profile ${profile.id}:`, error);
             return null;
         }
     }
@@ -481,10 +484,12 @@ class MainApp {
         // Get fresh profile data from ConfigManager to ensure latest settings
         const profile = this.configManager.getProfileById(profileId);
         if (!profile) {
-            console.error(`ERROR: Profile ${profileId} not found. Recreating window...`);
+            logger.error(`ERROR: Profile ${profileId} not found. Recreating window...`);
             this.recoverMissingProfile(profileId);
             return;
         }
+
+        this.infoLog(`Hotkey triggered for profile: ${profile.displayName} (ID: ${profileId})`);
 
         let window = this.profileWindows.get(profileId);
         
@@ -723,6 +728,9 @@ class MainApp {
     destroyProfileWindow(profileId) {
         const window = this.profileWindows.get(profileId);
         if (window && !window.isDestroyed()) {
+            const profile = this.configManager.getProfileById(profileId);
+            this.infoLog(`Destroying window for profile: ${profile ? profile.displayName : profileId}`);
+
             window.isExplicitlyDestroyed = true; // Mark for explicit destruction
             const monitorId = this.windowMonitorMapping.get(window);
             
