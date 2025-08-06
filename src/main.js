@@ -275,7 +275,7 @@ class MainApp {
         }
         
         // Ultimate fallback to primary display
-        this.warnLog(`Monitor ${monitorId} not found, using primary display ${primaryDisplay.id}`);
+        this.warnLog(`Monitor ${monitorId} not found, using primary display as fallback: ${primaryDisplay.id}`);
         return primaryDisplay;
     }
 
@@ -489,7 +489,7 @@ class MainApp {
             return;
         }
 
-        this.infoLog(`Hotkey triggered for profile: ${profile.displayName} (ID: ${profileId})`);
+        this.infoLog(`Hotkey triggered for profile '${profile.displayName}' (ID: ${profileId})`);
 
         let window = this.profileWindows.get(profileId);
         
@@ -734,7 +734,7 @@ class MainApp {
             window.isExplicitlyDestroyed = true; // Mark for explicit destruction
             const monitorId = this.windowMonitorMapping.get(window);
             
-            // Remove todos os mapeamentos
+            // Remove all mappings
             this.profileWindows.delete(profileId);
             this.windowMonitorMapping.delete(window);
             if (monitorId) {

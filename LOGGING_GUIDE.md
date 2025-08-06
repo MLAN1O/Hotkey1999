@@ -1,102 +1,123 @@
-# Logging System - HotkeyMyURLLikeIts1999
+# Logging System Guide – HotkeyMyURLLikeIts1999
 
-## Log File Location
+## 1. Overview
 
-The application now saves all logs persistently to the file:
+This document details the operation of the logging system in HotkeyMyURLLikeIts1999. The goal is to provide clear and detailed tracking of the application's operations, facilitating debugging, monitoring, and user support.
 
+Logs are essential for diagnosing issues related to multi-monitor setups, window behavior, and hotkey interactions.
+
+## 2. Log File Location
+
+All logs and error reports are stored in the user's data directory.
+
+- **Path:** `%appdata%\hotkeymyurllikeits1999`
+
+You can access this folder quickly:
+1. Press `Win + R` to open the "Run" dialog box.
+2. Type `%appdata%\hotkeymyurllikeits1999` and press Enter.
+
+### Generated Files:
+- `log.txt`: The main log file with activity from the current session.
+- `log_[timestamp].txt`: Old log files, automatically archived when they exceed 5MB.
+- `crash_report_[timestamp].json`: Detailed reports generated in case of critical failures.
+
+## 3. Log Format
+
+Each entry in the `log.txt` file follows a standard format to ensure clarity and consistency.
+
+`[timestamp] [PID] [LEVEL] Message {contextual_data}`
+
+- **`timestamp`**: Date and time of the event (MM/DD/YYYY HH:mm:ss.SSS).
+- **`PID`**: Process ID to identify a specific application session.
+- **`LEVEL`**: Severity level of the log (`DEBUG`, `INFO`, `WARN`, `ERROR`).
+- **`Message`**: Description of the event.
+- **`{contextual_data}`**: (Optional) A JSON object with relevant additional information.
+
+**Log Example:**
 ```
-C:\Users\[YOUR_USERNAME]\AppData\Roaming\hotkeymyurllikeits1999\log.txt
-```
-
-### How to Access Logs
-
-1. **Via Windows Explorer:**
-   - Press `Win + R`
-   - Type: `%appdata%\hotkeymyurllikeits1999`
-   - Press Enter
-   - Open the `log.txt` file
-
-2. **Via Command Prompt:**
-   ```cmd
-   type "%appdata%\hotkeymyurllikeits1999\log.txt"
-   ```
-
-3. **Via PowerShell:**
-   ```powershell
-   Get-Content "$env:APPDATA\hotkeymyurllikeits1999\log.txt" -Tail 50
-   ```
-
-## Log Format
-
-Each log entry contains:
-- **Timestamp**: Date and time with milliseconds (Brazilian format)
-- **PID**: Process ID to identify sessions
-- **Level**: DEBUG, INFO, WARN, ERROR
-- **Message**: Log content
-- **Data**: JSON objects when applicable
-
-### Log Example:
-```
-[05/08/2025 20:25:58.870] [PID:9768] [INFO] Logger initialized successfully {
-  "logFile": "C:\\Users\\yourname\\AppData\\Roaming\\hotkeymyurllikeits1999\\log.txt"
-}
-[05/08/2025 20:25:59.030] [DEBUG] validateMonitorPosition: Validating monitorId=2528732444
-[05/08/2025 20:25:59.031] [DEBUG] Available displays: 2528732444(27G2G4), 2779098405(TSB LEDTV)
+[08/06/2025 10:30:01.123] [PID:1234] [INFO] Hotkey triggered for profile: Main Display (ID: abc-123)
+[08/06/2025 10:30:05.456] [PID:1234] [WARN] Monitor 12345678 not found, using primary display 87654321
 ```
 
-## Implemented Features
+## 4. Log Levels
 
-### ✅ Persistent Logging
-- All logs are automatically saved to `log.txt` file
-- Logs remain available after closing the application
-- File is created in user-specific userData folder
+Log levels are used to categorize the importance of each event.
 
-### ✅ Size Management
-- Log files larger than 5MB are automatically archived
-- System creates timestamped backup before starting new log
-- Prevents log file from growing indefinitely
+| Level   | Description                                                                                      | Usage Examples                                                                      |
+| :------ | :----------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------- |
+| `DEBUG` | Detailed and granular information, useful only for deep code debugging.                          | `Validating monitorId=12345`, `Available displays: ...`                               |
+| `INFO`  | Important events that mark the normal flow of the application.                                   | `App started`, `Window created for profile X`, `Hotkey triggered`                   |
+| `WARN`  | Unexpected occurrences that do not prevent functionality but indicate a potential problem.       | `Monitor not found, using fallback`, `Duplicate hotkey detected`                    |
+| `ERROR` | Failures that impact functionality and require attention.                                        | `Failed to create window for profile Y`, `Profile not found`, `Error saving settings` |
 
-### ✅ Log Levels
-- **DEBUG**: Detailed information for debugging (validateMonitorPosition, etc.)
-- **INFO**: Important system events (initialization, etc.)
-- **WARN**: Warnings that don't prevent functionality
-- **ERROR**: Errors requiring attention
+## 5. Logged Events
 
-### ✅ Crash Reports
-- Critical errors automatically generate detailed reports
-- Crash reports are saved as separate JSON files
-- Includes system information, memory usage, and stack trace
+The logging system has been enhanced to capture the following key events:
 
-## Captured Information
+### Application Lifecycle
+- **`INFO`**: Initialization of the logger and the application.
+- **`INFO`**: Setup of error handling.
+- **`INFO`**: Application shutdown.
 
-The logging system captures:
-- **Monitor Management**: Monitor validation, fallbacks, found IDs
-- **Window Lifecycle**: Creation, destruction, window updates
-- **Profile Management**: Loading, validation, profile correction
-- **Error Handling**: Window creation failures, configuration issues
-- **System Information**: App version, platform, memory usage
+### Window Management
+- **`INFO`**: Creation of a profile window, with profile ID and monitor ID.
+  - `Profile window created for 'ProfileName' (ID: xyz-456) on monitor 12345678`
+- **`INFO`**: Destruction of a profile window.
+  - `Destroying window for profile: ProfileName`
+- **`INFO`**: Closing an existing window due to the per-monitor exclusivity rule.
+  - `Closing existing window on monitor 12345678 for profile: OldProfile`
+- **`INFO`**: Triggering a hotkey to toggle a window's visibility.
+  - `Hotkey triggered for profile: ProfileName (ID: xyz-456)`
 
-## For Developers
+### Monitor Management
+- **`DEBUG`**: Details of the monitor validation process.
+- **`WARN`**: Logged when the monitor configured for a profile is not found and a fallback monitor (usually the primary) is used.
+  - `Monitor 12345678 not found, using primary display 87654321`
 
-### Using the Logger in Code:
+### Errors and Configuration
+- **`ERROR`**: Failures when loading or saving `profiles.json` and `settings.json` files.
+- **`ERROR`**: Errors during the creation of profile windows.
+- **`ERROR`**: Attempting to interact with a profile that no longer exists.
+
+## 6. Crash Reports
+
+In the event of an unhandled error that causes a critical application failure, a detailed crash report is generated.
+
+- **Location**: `%appdata%\hotkeymyurllikeits1999\crash_report_[timestamp].json`
+- **Contents**:
+  - `error`: Error message and full stack trace.
+  - `context`: Additional information about where the error occurred.
+  - `systemInfo`: Application version, platform (Windows/macOS), architecture.
+  - `memoryUsage`: Memory usage at the time of the crash.
+  - `processInfo`: PID and process uptime.
+
+These reports are crucial for diagnosing and fixing complex bugs.
+
+## 7. For Developers
+
+To maintain consistency, always use the centralized `Logger` module.
+
+**Module Location:** `src/Logger.js`
+
+### How to Use the Logger
+Replace all `console.log`, `console.warn`, and `console.error` calls with the logger.
+
 ```javascript
 const logger = require('./Logger');
 
-// Different levels
-logger.debug('Debug information', { data: value });
-logger.info('Important event');
-logger.warn('Warning about something');
-logger.error('Critical error', error);
+// Usage examples:
+logger.debug('Granular debug information.', { details: '...' });
 
-// Automatic crash report
-logger.createCrashReport(error, { context: 'additional info' });
+logger.info(`Profile ${profile.displayName} loaded successfully.`);
+
+logger.warn('An unexpected condition occurred.', { profileId: 'abc-123' });
+
+logger.error('Failed to process the request.', error);
+
+// To manually generate a crash report (use sparingly):
+try {
+  // Code that might fail
+} catch (error) {
+  logger.createCrashReport(error, { context: 'During profile update' });
+}
 ```
-
-### File Locations:
-- **Main log**: `%appdata%\hotkeymyurllikeits1999\log.txt`
-- **Crash reports**: `%appdata%\hotkeymyurllikeits1999\crash_report_[timestamp].json`
-- **Archived logs**: `%appdata%\hotkeymyurllikeits1999\log_[timestamp].txt`
-
----
-
-This logging system was implemented to facilitate debugging of multi-monitor issues and provide detailed information for issue resolution.
