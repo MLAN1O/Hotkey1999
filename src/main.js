@@ -344,19 +344,7 @@ class MainApp {
             if (existingProfile && existingProfile.alwaysActive) {
                 existingWindow.hide();
             } else {
-                // Remove existing window mappings SILENTLY
-                this.windowMonitorMapping.delete(existingWindow);
-                
-                // Find and remove the profileId of the existing window
-                for (const [pId, window] of this.profileWindows) {
-                    if (window === existingWindow) {
-                        this.profileWindows.delete(pId);
-                        break;
-                    }
-                }
-                
-                // Close the existing window
-                existingWindow.destroy();
+                this.destroyProfileWindow(existingWindow.profileId);
             }
         }
         
@@ -443,7 +431,7 @@ class MainApp {
             });
 
             newWindow.on('close', (e) => {
-                if (!this.isQuitting) {
+                if (!this.isQuitting && !newWindow.isExplicitlyDestroyed) {
                     e.preventDefault();
                     newWindow.hide();
                 }
@@ -514,13 +502,19 @@ class MainApp {
             // Get the monitor associated with this window
             const monitorId = this.windowMonitorMapping.get(window);
             
-            // Hide other windows only on the same monitor
+            // Hide or destroy other windows on the same monitor
             for (const [otherId, otherWindow] of this.profileWindows) {
                 if (otherId !== profileId && 
                     otherWindow && !otherWindow.isDestroyed() &&
                     otherWindow.isVisible() && 
                     this.windowMonitorMapping.get(otherWindow) === monitorId) {
-                    otherWindow.hide();
+                    
+                    const otherProfile = this.configManager.getProfileById(otherId);
+                    if (otherProfile && otherProfile.alwaysActive) {
+                        otherWindow.hide();
+                    } else {
+                        this.destroyProfileWindow(otherId);
+                    }
                 }
             }
             
@@ -727,6 +721,7 @@ class MainApp {
     destroyProfileWindow(profileId) {
         const window = this.profileWindows.get(profileId);
         if (window && !window.isDestroyed()) {
+            window.isExplicitlyDestroyed = true; // Mark for explicit destruction
             const monitorId = this.windowMonitorMapping.get(window);
             
             // Remove todos os mapeamentos
