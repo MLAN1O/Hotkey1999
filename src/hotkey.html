@@ -18,7 +18,13 @@
             transition: background-color 0.3s, color 0.3s;
             color: var(--text-color);
         }
-        .keyboard-wrapper { background-color: var(--secondary-bg-color); padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+        .keyboard-wrapper { 
+            background-color: var(--secondary-bg-color); 
+            padding: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); 
+            position: relative;
+        }
         .title { text-align: center; margin-bottom: 20px; font-size: 1.2em; color: var(--text-color); font-weight: bold; }
         .keyboard-container { display: flex; gap: 25px; }
         .key { background-color: var(--primary-bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-bottom: 3px solid var(--border-color); border-radius: 5px; padding: 10px; min-width: 40px; width: 40px; height: 40px; box-sizing: border-box; display: flex; justify-content: center; align-items: center; font-size: 0.9em; cursor: pointer; transition: all 0.1s ease; }
@@ -56,6 +62,112 @@
         .confirm-row { margin-top: 20px; }
         .confirm-button { width: 100%; background-color: #10b981; color: white; font-size: 1.1em; font-weight: bold; border: none; border-bottom: 4px solid #059669; border-radius: 6px; padding: 15px; cursor: pointer; transition: all 0.1s ease; }
         .confirm-button:active { transform: translateY(2px); border-bottom-width: 2px; background-color: #059669; }
+
+        /* Special Keys Dropdown */
+        .special-keys-dropdown {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .dropdown-toggle {
+            background-color: var(--primary-bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-bottom: 3px solid var(--border-color);
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.1s ease;
+            min-width: 140px;
+            justify-content: space-between;
+        }
+
+        .dropdown-toggle:hover {
+            background-color: var(--secondary-bg-color);
+        }
+
+        .dropdown-toggle:active {
+            transform: translateY(2px);
+            border-bottom-width: 1px;
+        }
+
+        .dropdown-toggle.has-selection {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .dropdown-arrow {
+            transition: transform 0.2s ease;
+        }
+
+        .dropdown-toggle.open .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: var(--secondary-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            min-width: 250px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-section {
+            padding: 8px 0;
+        }
+
+        .dropdown-section:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-section-title {
+            padding: 4px 16px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: var(--text-color);
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--text-color);
+            transition: background-color 0.1s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .dropdown-item:hover {
+            background-color: var(--primary-bg-color);
+        }
+
+        .dropdown-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+            border-left: 4px solid var(--primary-color);
+        }
+
         /* Toast Messages */
         #toast-container {
             position: fixed;
@@ -95,6 +207,54 @@
 <body>
     <div id="toast-container"></div>
     <div class="keyboard-wrapper">
+        <div class="special-keys-dropdown">
+            <div class="dropdown-toggle">
+                <span>Special Keys</span>
+                <span class="dropdown-arrow">▼</span>
+            </div>
+            <div class="dropdown-menu">
+                <div class="dropdown-section">
+                    <div class="dropdown-section-title">Multimedia Keys</div>
+                    <div class="dropdown-item" data-special-key="MediaPlayPause">Media Play/Pause</div>
+                    <div class="dropdown-item" data-special-key="MediaStop">Media Stop</div>
+                    <div class="dropdown-item" data-special-key="MediaTrackNext">Media Next Track</div>
+                    <div class="dropdown-item" data-special-key="MediaTrackPrevious">Media Previous Track</div>
+                    <div class="dropdown-item" data-special-key="AudioVolumeUp">Volume Up</div>
+                    <div class="dropdown-item" data-special-key="AudioVolumeDown">Volume Down</div>
+                    <div class="dropdown-item" data-special-key="AudioVolumeMute">Volume Mute</div>
+                </div>
+                <div class="dropdown-section">
+                    <div class="dropdown-section-title">Web / System Navigation</div>
+                    <div class="dropdown-item" data-special-key="BrowserBack">Browser Back</div>
+                    <div class="dropdown-item" data-special-key="BrowserForward">Browser Forward</div>
+                    <div class="dropdown-item" data-special-key="BrowserRefresh">Browser Refresh</div>
+                    <div class="dropdown-item" data-special-key="BrowserStop">Browser Stop</div>
+                    <div class="dropdown-item" data-special-key="BrowserSearch">Browser Search</div>
+                    <div class="dropdown-item" data-special-key="BrowserFavorites">Browser Favorites</div>
+                    <div class="dropdown-item" data-special-key="BrowserHome">Browser Home</div>
+                </div>
+                <div class="dropdown-section">
+                    <div class="dropdown-section-title">Applications</div>
+                    <div class="dropdown-item" data-special-key="LaunchMail">Launch Mail</div>
+                    <div class="dropdown-item" data-special-key="LaunchMediaPlayer">Launch Media Player</div>
+                    <div class="dropdown-item" data-special-key="LaunchApp1">Launch Application 1</div>
+                    <div class="dropdown-item" data-special-key="LaunchApp2">Launch Application 2</div>
+                </div>
+                <div class="dropdown-section">
+                    <div class="dropdown-section-title">Power and System</div>
+                    <div class="dropdown-item" data-special-key="Sleep">Sleep</div>
+                    <div class="dropdown-item" data-special-key="WakeUp">Wake</div>
+                    <div class="dropdown-item" data-special-key="Power">Power</div>
+                </div>
+                <div class="dropdown-section">
+                    <div class="dropdown-section-title">Hardware (Laptops)</div>
+                    <div class="dropdown-item" data-special-key="MonBrightnessUp">Brightness Up</div>
+                    <div class="dropdown-item" data-special-key="MonBrightnessDown">Brightness Down</div>
+                    <div class="dropdown-item" data-special-key="KbdLightToggle">Keyboard Light Toggle</div>
+                    <div class="dropdown-item" data-special-key="TouchpadToggle">Touchpad Toggle</div>
+                </div>
+            </div>
+        </div>
         <div class="title">Select a key combination and click Confirm</div>
         <div class="keyboard-container">
             <div class="main-keyboard">
@@ -242,6 +402,121 @@
                 toast.addEventListener('transitionend', () => toast.remove());
             }, 3000);
         }
+
+        // Special Keys Dropdown Functionality
+        const dropdownToggle = document.querySelector('.dropdown-toggle');
+        const dropdownMenu = document.querySelector('.dropdown-menu');
+        const dropdownItems = document.querySelectorAll('.dropdown-item');
+        let selectedSpecialKey = null;
+
+        // Toggle dropdown
+        dropdownToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+            dropdownToggle.classList.toggle('open');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.classList.remove('open');
+            }
+        });
+
+        // Handle special key selection
+        dropdownItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Clear previous selection
+                dropdownItems.forEach(i => i.classList.remove('selected'));
+                
+                // Select current item
+                this.classList.add('selected');
+                selectedSpecialKey = this.getAttribute('data-special-key');
+                
+                // Update dropdown button text and style
+                const buttonText = dropdownToggle.querySelector('span:first-child');
+                buttonText.textContent = this.textContent;
+                dropdownToggle.classList.add('has-selection');
+                
+                // Close dropdown
+                dropdownMenu.classList.remove('show');
+                dropdownToggle.classList.remove('open');
+                
+                showToast(`Special key selected: ${this.textContent}`, 'success');
+            });
+        });
+
+        // Clear special key selection when regular keys are clicked
+        const regularKeys = document.querySelectorAll('.key');
+        regularKeys.forEach(key => {
+            key.addEventListener('click', function() {
+                // Don't clear special key selection when clicking regular keys
+                // Allow combination of special keys with regular keys
+            });
+        });
+
+        // Modify confirm button to include special key if selected
+        const confirmButton = document.querySelector('.confirm-button');
+        confirmButton.addEventListener('click', function() {
+            const selectedKeys = document.querySelectorAll('.key.selected');
+            const modifiers = [];
+            const normalKeys = [];
+            
+            selectedKeys.forEach(key => {
+                if (key.classList.contains('modifier')) {
+                    modifiers.push(key.getAttribute('data-key'));
+                } else {
+                    normalKeys.push(key.getAttribute('data-key'));
+                }
+            });
+            
+            let combination = '';
+            
+            // Special key can be used alone or combined with other keys
+            if (selectedSpecialKey) {
+                combination = selectedSpecialKey;
+                
+                // Add modifiers if any
+                if (modifiers.length > 0) {
+                    combination = modifiers.join(' + ') + ' + ' + combination;
+                }
+                
+                // Add normal keys if any
+                if (normalKeys.length > 0) {
+                    combination += ' + ' + normalKeys.join(' + ');
+                }
+            } else {
+                // Regular key combination logic
+                if (modifiers.length > 0) {
+                    combination += modifiers.join(' + ');
+                }
+                if (normalKeys.length > 0) {
+                    if (combination) combination += ' + ';
+                    combination += normalKeys.join(' + ');
+                }
+            }
+            
+            // Check if we have any selection (special key or regular keys)
+            if (selectedSpecialKey || selectedKeys.length > 0) {
+                showToast(`Key combination confirmed: ${combination}`, 'success');
+                console.log('Key combination:', combination);
+                
+                // Clear all selections after confirm
+                selectedKeys.forEach(key => key.classList.remove('selected'));
+                if (selectedSpecialKey) {
+                    dropdownItems.forEach(i => i.classList.remove('selected'));
+                    selectedSpecialKey = null;
+                    dropdownToggle.classList.remove('has-selection');
+                    const buttonText = dropdownToggle.querySelector('span:first-child');
+                    buttonText.textContent = 'Special Keys';
+                }
+            } else {
+                showToast('Please select at least one key before confirming!', 'error');
+            }
+        });
     </script>
 </body>
 </html>
