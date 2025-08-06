@@ -530,7 +530,7 @@ class MainApp {
                     if (window && !window.isDestroyed()) {
                         window.webContents.reload();
                     }
-                }, 200);
+                }, 50);
             }
         }
     }
