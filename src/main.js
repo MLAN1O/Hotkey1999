@@ -678,7 +678,8 @@ class MainApp {
                                 validatedNewProfile.enableBackgroundThrottling !== oldProfile.enableBackgroundThrottling ||
                                 validatedNewProfile.enableRefreshOnOpen !== oldProfile.enableRefreshOnOpen ||
                                 validatedNewProfile.muteAudioWhenBlurred !== oldProfile.muteAudioWhenBlurred ||
-                                validatedNewProfile.hideFromTaskbar !== oldProfile.hideFromTaskbar;
+                                validatedNewProfile.hideFromTaskbar !== oldProfile.hideFromTaskbar ||
+                                validatedNewProfile.alwaysActive !== oldProfile.alwaysActive;
 
         if (needsRecreation) {
             const wasVisible = window.isVisible(); // Check visibility before destroying
