@@ -38,7 +38,7 @@ Each log entry contains:
 ### Log Example:
 ```
 [05/08/2025 20:25:58.870] [PID:9768] [INFO] Logger initialized successfully {
-  "logFile": "C:\\Users\\maxla\\AppData\\Roaming\\hotkeymyurllikeits1999\\log.txt"
+  "logFile": "C:\\Users\\yourname\\AppData\\Roaming\\hotkeymyurllikeits1999\\log.txt"
 }
 [05/08/2025 20:25:59.030] [DEBUG] validateMonitorPosition: Validating monitorId=2528732444
 [05/08/2025 20:25:59.031] [DEBUG] Available displays: 2528732444(27G2G4), 2779098405(TSB LEDTV)
