@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    const state = { modifiers: new Set(), mainKey: null };
+    const state = { modifiers: new Set(), mainKey: null, specialKey: null };
     const keyboardWrapper = document.querySelector('.keyboard-wrapper');
+    const dropdownToggle = document.querySelector('.dropdown-toggle');
+    const dropdownMenu = document.querySelector('.dropdown-menu');
+    const dropdownItems = document.querySelectorAll('.dropdown-item');
 
     // Function to apply theme to the html element
     function applyTheme(theme) {
@@ -21,8 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const normalizedPart = part.replace('CommandOrControl', 'Ctrl').replace('CmdOrCtrl', 'Ctrl');
             if (['Ctrl', 'Alt', 'Shift'].includes(normalizedPart)) {
                 state.modifiers.add(normalizedPart);
-            } else {
+            } else if (document.querySelector(`.key[data-key="${normalizedPart}"]`)) {
                 state.mainKey = normalizedPart;
+            } else {
+                state.specialKey = normalizedPart;
             }
         });
     }
@@ -40,6 +45,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 keyEl.classList.toggle('selected', state.mainKey === key);
             }
         });
+
+        // Update dropdown UI
+        const buttonText = dropdownToggle.querySelector('span:first-child');
+        if (state.specialKey) {
+            const selectedItem = document.querySelector(`.dropdown-item[data-special-key="${state.specialKey}"]`);
+            if (selectedItem) {
+                buttonText.textContent = selectedItem.textContent;
+                dropdownToggle.classList.add('has-selection');
+                dropdownItems.forEach(i => i.classList.remove('selected'));
+                selectedItem.classList.add('selected');
+            }
+        } else {
+            buttonText.textContent = 'Special Keys';
+            dropdownToggle.classList.remove('has-selection');
+            dropdownItems.forEach(i => i.classList.remove('selected'));
+        }
     }
 
     // --- Event Handlers ---
@@ -54,10 +75,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (isModifier) {
             state.modifiers.has(key) ? state.modifiers.delete(key) : state.modifiers.add(key);
         } else {
-            // Allow only one main key to be selected
             state.mainKey = state.mainKey === key ? null : key;
         }
         updateSelection();
+    }
+
+    function handleDropdownItemClick(event) {
+        const item = event.target;
+        const specialKey = item.getAttribute('data-special-key');
+
+        if (specialKey === 'none') {
+            state.specialKey = null;
+        } else {
+            state.specialKey = specialKey;
+        }
+
+        updateSelection();
+        dropdownMenu.classList.remove('show');
+        dropdownToggle.classList.remove('open');
     }
 
     function handleConfirmClick() {
@@ -66,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (!state.mainKey) {
+        if (!state.mainKey && !state.specialKey) {
             showToast('You need to select a hotkey', 'error');
             return;
         }
@@ -75,7 +110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (state.modifiers.has('Ctrl')) parts.push('CommandOrControl');
         if (state.modifiers.has('Alt')) parts.push('Alt');
         if (state.modifiers.has('Shift')) parts.push('Shift');
-        parts.push(state.mainKey);
+        if (state.mainKey) parts.push(state.mainKey);
+        if (state.specialKey) parts.push(state.specialKey);
 
         window.api.selectHotkey(parts.join('+'));
     }
@@ -83,6 +119,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Initialization ---
     keyboardWrapper.addEventListener('click', handleKeyClick);
     document.querySelector('.confirm-button').addEventListener('click', handleConfirmClick);
+    dropdownItems.forEach(item => item.addEventListener('click', handleDropdownItemClick));
 
     updateSelection(); // Set initial state
 
