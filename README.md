@@ -1,5 +1,3 @@
-## Caution: This is a Beta Pre-release
-
 # HotkeyMyURLLikeIts1999
 [![Version](https://img.shields.io/badge/version-1.0.7-blue.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
 [![Platform](https://img.shields.io/badge/platform-windows-lightgrey.svg)](https://github.com/MLAN1O/Hotkey1999/releases)
