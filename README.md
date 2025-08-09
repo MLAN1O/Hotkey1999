@@ -47,8 +47,6 @@ Perfect for:
 
 See it in action:
 
-> \*Note: GIFs below show the older UI — updated ones with the new multi-profile manager are on the way!\*
-
 #### From system tray to action:
 ![Tray Icon Access](demo/TrayIcon.gif)
 
