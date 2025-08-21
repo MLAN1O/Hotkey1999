@@ -26,12 +26,9 @@ No load time, no clicks — it just appears. Press the same hotkey again, and it
 Perfect for:
 * **Instantly popping up your camera grid, dashboard, or any web tool**
 * **Keeping monitoring screens one keystroke away — no browser delays**
-* **Dodging tab overload by giving your go-to web app its own shortcut**
 * **Feeling like a hacker every time a fullscreen web page appears out of nowhere**
 
 ## Cool Features
-
-* ⚡ **Instant Access:** Launch any URL instantly in a clean, borderless window with a global hotkey.
 
 * 🗂️ **Unlimited Profiles:** Create and manage multiple profiles, each with its own URL, hotkey, and custom settings.
 
